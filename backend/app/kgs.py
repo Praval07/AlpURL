@@ -18,6 +18,11 @@ def encode_base62(num: int) -> str:
 
 class KeyGenerationService:
     def __init__(self, db_path="kgs_state.txt", block_size=1000):
+        import os
+        # On Vercel (or other AWS Lambda environments), use /tmp as the writable storage directory
+        if os.getenv("VERCEL") == "1" or "AWS_LAMBDA_FUNCTION_NAME" in os.environ:
+            db_path = "/tmp/kgs_state.txt"
+            
         self.db_path = db_path
         self.block_size = block_size
         self.lock = threading.Lock()
