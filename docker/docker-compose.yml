@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: alpurl_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../frontend:/app/frontend
+      - alpurl_data:/app
+    environment:
+      - PORT=8000
+    restart: always
+
+volumes:
+  alpurl_data:

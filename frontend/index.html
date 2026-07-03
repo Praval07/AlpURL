@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lilliput - NanoURL Analytics</title>
+    
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Geist:wght@600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tailwind CSS with custom configuration -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-container": "#171f33",
+                            "border-glass": "rgba(255, 255, 255, 0.1)",
+                            "on-tertiary-container": "#bdffdb",
+                            "on-tertiary-fixed-variant": "#005236",
+                            "surface-glass": "rgba(15, 23, 42, 0.7)",
+                            "outline": "#8d90a0",
+                            "inverse-on-surface": "#283044",
+                            "on-surface-variant": "#c3c6d7",
+                            "on-secondary-container": "#00424e",
+                            "bg-dark": "#0F172A",
+                            "secondary": "#4cd7f6",
+                            "surface-container-high": "#222a3d",
+                            "primary": "#b4c5ff",
+                            "on-background": "#dae2fd",
+                            "on-secondary": "#003640",
+                            "on-primary-fixed-variant": "#003ea8",
+                            "primary-fixed": "#dbe1ff",
+                            "on-tertiary-fixed": "#002113",
+                            "inverse-surface": "#dae2fd",
+                            "surface-bright": "#31394d",
+                            "secondary-fixed": "#acedff",
+                            "surface-dim": "#0b1326",
+                            "inverse-primary": "#0053db",
+                            "bg-light": "#F8FAFC",
+                            "on-primary-fixed": "#00174b",
+                            "surface-container-lowest": "#060e20",
+                            "on-tertiary": "#003824",
+                            "secondary-fixed-dim": "#4cd7f6",
+                            "tertiary-container": "#007d55",
+                            "error": "#ffb4ab",
+                            "on-primary": "#002a78",
+                            "surface": "#0b1326",
+                            "primary-fixed-dim": "#b4c5ff",
+                            "on-surface": "#dae2fd",
+                            "surface-container-low": "#131b2e",
+                            "tertiary": "#4edea3",
+                            "outline-variant": "#434655",
+                            "tertiary-fixed-dim": "#4edea3",
+                            "surface-container-highest": "#2d3449",
+                            "surface-variant": "#2d3449",
+                            "on-error-container": "#ffdad6",
+                            "on-secondary-fixed": "#001f26",
+                            "on-error": "#690005",
+                            "surface-tint": "#b4c5ff",
+                            "on-primary-container": "#eeefff",
+                            "error-container": "#93000a",
+                            "tertiary-fixed": "#6ffbbe",
+                            "on-secondary-fixed-variant": "#004e5c",
+                            "primary-container": "#2563eb",
+                            "background": "#0b1326",
+                            "secondary-container": "#03b5d3"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "max-width": "1280px",
+                            "margin-mobile": "16px",
+                            "base": "4px",
+                            "md": "1.5rem",
+                            "xl": "4rem",
+                            "lg": "2.5rem",
+                            "xs": "0.5rem",
+                            "sm": "1rem",
+                            "gutter": "24px"
+                    },
+                    "fontFamily": {
+                            "headline-md": ["Geist", "sans-serif"],
+                            "body-lg": ["Inter", "sans-serif"],
+                            "headline-lg-mobile": ["Geist", "sans-serif"],
+                            "display-xl": ["Geist", "sans-serif"],
+                            "label-mono": ["JetBrains Mono", "monospace"],
+                            "headline-lg": ["Geist", "sans-serif"],
+                            "body-md": ["Inter", "sans-serif"],
+                            "button": ["Inter", "sans-serif"],
+                            "body-sm": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                            "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                            "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "display-xl": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                            "label-mono": ["13px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                            "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                            "button": ["14px", {"lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                            "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px -5px #2563eb;
+        }
+        
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(78, 222, 163, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
+        }
+        .animate-pulse-dot {
+            animation: pulse-dot 2s infinite;
+        }
+
+        .chart-grid {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center bottom;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex selection:bg-primary selection:text-on-primary">
+    <!-- SideNavBar Component -->
+    <aside class="w-[280px] h-screen fixed left-0 top-0 border-r border-border-glass shadow-sm bg-surface-container flex flex-col p-md z-50">
+        <div class="flex items-center gap-sm mb-xl px-sm">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">link</span>
+            </div>
+            <div>
+                <h1 class="font-headline-md text-headline-md font-bold text-primary">Lilliput</h1>
+                <p class="font-label-mono text-label-mono text-on-surface-variant">NanoURL Core Engine</p>
+            </div>
+        </div>
+        <nav class="flex-1 flex flex-col gap-base font-body-md text-body-md overflow-y-auto pr-sm custom-scrollbar">
+            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-primary font-bold bg-primary/10 scale-95 active:scale-100 transition-transform" href="#" id="nav-dashboard">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                Dashboard
+            </a>
+            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#" id="nav-links">
+                <span class="material-symbols-outlined">link</span>
+                Links Registry
+            </a>
+            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#" id="nav-analytics">
+                <span class="material-symbols-outlined">insights</span>
+                Analytics
+            </a>
+            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+                <span class="material-symbols-outlined">api</span>
+                API Reference
+            </a>
+            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+        </nav>
+        <div class="mt-auto p-sm bg-surface-container-low rounded-xl border border-border-glass">
+            <p class="font-label-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-xs">KGS Server Status</p>
+            <div class="flex items-center gap-xs">
+                <span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse-dot"></span>
+                <span class="font-body-sm text-[12px] text-tertiary font-medium">Node-1 Connected</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- TopNavBar Component -->
+    <header class="fixed top-0 right-0 w-[calc(100%-280px)] z-40 bg-surface-glass backdrop-blur-xl border-b border-border-glass shadow-sm flex justify-between items-center h-16 px-lg font-body-sm text-body-sm">
+        <div class="flex items-center gap-md">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <input class="bg-surface-container border border-border-glass rounded-full py-xs pl-xl pr-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 transition-all placeholder-on-surface-variant font-label-mono text-label-mono" placeholder="Search short URL stats..." type="text"/>
+            </div>
+        </div>
+        <div class="flex items-center gap-md">
+            <div class="flex items-center gap-base border-r border-border-glass pr-md mr-xs">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all duration-200 opacity-80 hover:opacity-100 relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full"></span>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all duration-200 opacity-80 hover:opacity-100" id="btn-toggle-theme">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+            <button class="px-md py-xs rounded-full bg-primary text-on-primary font-button text-button hover:bg-primary/90 transition-colors uppercase tracking-wide neon-glow" id="btn-header-shorten">
+                New Short URL
+            </button>
+            <div class="w-8 h-8 rounded-full bg-surface-container-highest border border-border-glass overflow-hidden ml-sm">
+                <img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"/>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="ml-[280px] w-[calc(100%-280px)] mt-16 p-lg flex flex-col gap-lg custom-scrollbar">
+        <div class="max-w-[max-width] mx-auto w-full flex flex-col gap-lg">
+            
+            <!-- Page Header & Global Search Bar -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md">
+                <div>
+                    <h2 class="font-headline-lg text-headline-lg text-on-background mb-xs" id="page-title">Performance Overview</h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant">Real-time insights across your shortened redirects.</p>
+                </div>
+                <div class="flex gap-sm">
+                    <button class="glass-card px-md py-xs flex items-center gap-xs font-label-mono text-label-mono text-on-surface hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                        Lifetime
+                    </button>
+                    <button class="glass-card px-sm py-xs flex items-center justify-center text-on-surface hover:text-primary transition-colors" id="btn-global-refresh">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Beautiful Shortener Box -->
+            <section class="glass-card p-lg border border-border-glass/40 shadow-xl shadow-primary/5 flex flex-col gap-md">
+                <h3 class="font-headline-md text-[20px] text-on-background font-semibold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[22px]">auto_awesome</span>
+                    Create Dynamic Short Link
+                </h3>
+                
+                <form id="shorten-form" class="flex flex-col gap-sm">
+                    <div class="flex flex-col md:flex-row gap-sm items-stretch">
+                        <!-- URL Input -->
+                        <div class="flex-1 glass-card bg-black/30 border border-border-glass p-2 rounded-xl flex items-center gap-sm">
+                            <span class="material-symbols-outlined text-outline-variant px-sm">link</span>
+                            <input class="w-full bg-transparent border-none text-on-surface font-label-mono text-label-mono focus:ring-0 placeholder:text-outline-variant h-10" placeholder="Paste your long destination URL here..." type="url" id="long-url" required/>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="bg-primary text-on-primary font-button text-button uppercase hover:bg-primary/95 transition-all px-lg rounded-xl h-14 flex items-center justify-center gap-2 whitespace-nowrap neon-glow" id="btn-submit">
+                            <span>Shorten Link</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_right_alt</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-md mt-xs">
+                        <div class="flex flex-col gap-base">
+                            <label class="font-body-sm text-xs font-semibold text-on-surface-variant uppercase tracking-wider pl-1" for="custom-alias">Custom Alias (Optional)</label>
+                            <input class="bg-black/30 border border-border-glass rounded-xl py-xs px-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-12 font-label-mono text-label-mono placeholder:text-outline-variant/60" placeholder="e.g., custom-alias" type="text" id="custom-alias" minlength="3" maxlength="50" pattern="^[a-zA-Z0-9\-_]+$"/>
+                        </div>
+                        <div class="flex flex-col gap-base">
+                            <label class="font-body-sm text-xs font-semibold text-on-surface-variant uppercase tracking-wider pl-1" for="expiry-hours">Link Expiry Duration (Optional Hours)</label>
+                            <input class="bg-black/30 border border-border-glass rounded-xl py-xs px-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-12 font-label-mono text-label-mono placeholder:text-outline-variant/60" placeholder="e.g., 24 (Leave blank for default)" type="number" id="expiry-hours" min="1"/>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Result Panel -->
+                <div id="result-card" class="hidden glass-card bg-surface-container-low/40 p-md border border-primary/20 rounded-xl mt-sm animate-fade-in flex flex-col gap-sm">
+                    <div class="flex justify-between items-center border-b border-border-glass/40 pb-sm">
+                        <h4 class="font-body-lg text-body-md font-semibold text-tertiary flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-tertiary">check_circle</span>
+                            Short Link Created Successfully
+                        </h4>
+                        <span class="font-label-mono text-xs text-on-surface-variant" id="res-key-label">Key: <span id="res-key" class="text-primary font-bold"></span></span>
+                    </div>
+                    <div class="flex gap-sm items-center mt-xs">
+                        <input class="flex-1 bg-black/40 border border-border-glass rounded-xl py-xs px-md text-primary font-label-mono text-label-mono focus:outline-none h-12" id="shortened-url-display" readonly type="text"/>
+                        <button class="px-md bg-secondary/15 border border-secondary/35 text-secondary hover:bg-secondary/25 transition-all rounded-xl h-12 flex items-center gap-xs font-button text-button uppercase" id="btn-copy">
+                            <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                            <span class="copy-text">Copy</span>
+                        </button>
+                    </div>
+                    <div class="flex justify-between text-xs font-label-mono text-on-surface-variant px-sm mt-xs">
+                        <span>Expiry Date: <span id="res-ttl" class="text-on-surface font-semibold"></span></span>
+                        <span>Pre-allocated: Yes</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bento Stats Grid Layout -->
+            <div class="grid grid-cols-12 gap-md">
+                
+                <!-- Live Redirect Status Tracker (Col span 4) -->
+                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-tertiary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div class="flex justify-between items-start z-10">
+                        <div class="flex items-center gap-xs text-tertiary font-label-mono text-label-mono uppercase tracking-wider">
+                            <div class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse-dot"></div>
+                            Engine Online
+                        </div>
+                        <span class="material-symbols-outlined text-on-surface-variant">bolt</span>
+                    </div>
+                    <div class="mt-xl z-10">
+                        <div class="font-display-xl text-display-xl text-on-background tabular-nums tracking-tighter" id="stat-total-clicks">0</div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs flex items-center gap-xs">
+                            <span class="text-tertiary font-bold flex items-center" id="active-redirect-pct">Total Redirects Served</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats (Col span 8, internal grid) -->
+                <div class="col-span-12 md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-md">
+                    <!-- Total Links Card -->
+                    <div class="glass-card p-md flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">Total Links</p>
+                            <span class="material-symbols-outlined text-primary">link</span>
+                        </div>
+                        <div class="mt-md">
+                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums" id="stat-total-links">0</div>
+                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
+                                <div class="h-full bg-primary w-[80%] rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Latency Card -->
+                    <div class="glass-card p-md flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">Avg. Latency</p>
+                            <span class="material-symbols-outlined text-secondary">speed</span>
+                        </div>
+                        <div class="mt-md">
+                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums">&lt; 8 ms</div>
+                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
+                                <div class="h-full bg-secondary w-[95%] rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Uptime Card -->
+                    <div class="glass-card p-md flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">System Uptime</p>
+                            <span class="material-symbols-outlined text-tertiary">analytics</span>
+                        </div>
+                        <div class="mt-md">
+                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums">99.99%</div>
+                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
+                                <div class="h-full bg-tertiary w-[100%] rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Chart (Col span 12) -->
+                <div class="col-span-12 glass-card p-md flex flex-col h-[380px]">
+                    <div class="flex justify-between items-center mb-md border-b border-border-glass/40 pb-xs">
+                        <h3 class="font-body-lg text-body-lg text-on-background font-semibold flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-primary text-[18px]">trending_up</span>
+                            Traffic Volume Over Time
+                        </h3>
+                        <span class="font-label-mono text-xs text-on-surface-variant">Real-time DB Telemetry</span>
+                    </div>
+                    <div class="flex-1 relative min-h-0 w-full">
+                        <canvas id="clicksChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Breakdown: Traffic Sources (Col span 4) -->
+                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
+                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
+                        <span class="material-symbols-outlined text-primary text-[18px]">share</span> Referrers
+                    </h3>
+                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
+                        <canvas id="referrersChart" class="w-full h-full max-h-[220px]"></canvas>
+                    </div>
+                </div>
+
+                <!-- Breakdown: Browsers (Col span 4) -->
+                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
+                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
+                        <span class="material-symbols-outlined text-secondary text-[18px]">public</span> Top Browsers
+                    </h3>
+                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
+                        <canvas id="browsersChart" class="w-full h-full max-h-[220px]"></canvas>
+                    </div>
+                </div>
+
+                <!-- Breakdown: Operating Systems (Col span 4) -->
+                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
+                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
+                        <span class="material-symbols-outlined text-tertiary text-[18px]">devices</span> OS Distribution
+                    </h3>
+                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
+                        <canvas id="osChart" class="w-full h-full max-h-[220px]"></canvas>
+                    </div>
+                </div>
+
+                <!-- Link Registry Table (Col span 12) -->
+                <div class="col-span-12 glass-card p-md" id="registry-section">
+                    <div class="flex justify-between items-center mb-md border-b border-border-glass/40 pb-xs">
+                        <h3 class="font-body-lg text-body-lg text-on-background font-semibold flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-primary text-[20px]">list</span>
+                            Active Link Registry
+                        </h3>
+                        <button class="px-sm py-xs border border-border-glass/50 hover:bg-surface-container-high rounded-xl text-on-surface font-button text-button transition-colors flex items-center gap-xs" id="btn-refresh-registry">
+                            <span class="material-symbols-outlined text-[16px]">sync</span>
+                            Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="w-full overflow-x-auto border border-border-glass/40 rounded-xl bg-black/20 custom-scrollbar">
+                        <table class="w-full text-left font-body-sm text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-white/2 border-b border-border-glass/40 text-on-surface-variant font-semibold">
+                                    <th class="p-4">Short Key</th>
+                                    <th class="p-4">Original URL</th>
+                                    <th class="p-4 text-center">Clicks</th>
+                                    <th class="p-4">Created Date</th>
+                                    <th class="p-4 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registry-list">
+                                <!-- Populated dynamically -->
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-on-surface-variant">No links shortened yet. Check KGS!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Details/Analytics Log Modal -->
+    <div id="analytics-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in p-sm">
+        <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-4xl max-h-[85vh] flex flex-col p-lg shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-border-glass/40 pb-md mb-md">
+                <h3 class="font-headline-md text-headline-md text-on-background font-semibold">
+                    Redirection Logs: <span id="modal-key" class="text-primary font-bold">key</span>
+                </h3>
+                <button class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" id="btn-close-modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-sm flex-1 min-h-0">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-black/30 border border-border-glass/40 p-md rounded-xl font-label-mono text-xs gap-sm">
+                    <div class="flex items-center gap-xs min-w-0">
+                        <span class="text-outline">Long URL:</span>
+                        <a id="modal-long-url" href="#" target="_blank" class="text-primary hover:underline truncate max-w-[450px]">https://...</a>
+                    </div>
+                    <div class="shrink-0">
+                        <span class="text-outline">Hits:</span>
+                        <span id="modal-clicks-count" class="bg-primary/20 text-primary border border-primary/40 px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto border border-border-glass/40 rounded-xl bg-black/20 custom-scrollbar max-h-[400px]">
+                    <table class="w-full text-left font-body-sm text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-white/2 border-b border-border-glass/40 text-on-surface-variant font-semibold sticky top-0 bg-surface-container-high z-10">
+                                <th class="p-3">Timestamp</th>
+                                <th class="p-3">IP Address</th>
+                                <th class="p-3">Browser</th>
+                                <th class="p-3">OS</th>
+                                <th class="p-3">Referrer</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-logs-list">
+                            <!-- Populated dynamically -->
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-on-surface-variant">No clicks logged for this URL.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend logic script link -->
+    <script src="/app.js"></script>
+    <script>
+        // Smooth scroll action for header buttons
+        document.getElementById('btn-header-shorten')?.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            document.getElementById('long-url')?.focus();
+        });
+    </script>
+</body>
+</html>

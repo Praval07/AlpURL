@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpurl-deployment
+  labels:
+    app: alpurl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: alpurl
+  template:
+    metadata:
+      labels:
+        app: alpurl
+    spec:
+      containers:
+      - name: alpurl-app
+        image: praval07/alpurl:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /api/dashboard-stats
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/dashboard-stats
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
