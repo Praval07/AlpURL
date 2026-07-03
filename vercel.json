@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/(style\\.css|app\\.js|favicon\\.ico)",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/(dashboard|links|qr|analytics|campaigns|domains|settings|profile)",
+      "dest": "frontend/index.html"
+    },
+    {
+      "src": "/$",
+      "dest": "frontend/index.html"
+    },
+    {
+      "src": "/([^/]+)",
+      "dest": "api/index.py"
+    }
+  ]
+}

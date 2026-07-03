@@ -45,6 +45,7 @@ test_lilliput.db
 
 # Environmental variables
 .env
+.env.local
 
 # Testing
 .pytest_cache/

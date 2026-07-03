@@ -3,16 +3,23 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Lilliput - NanoURL Analytics</title>
-    
+    <meta name="description" content="AlpURL — AI-powered URL shortener and QR code generator. Shorten links, generate QR codes, and track analytics — free forever."/>
+    <meta name="keywords" content="AlpURL, URL shortener, link shortener, QR code generator, link analytics, free URL shortener, AI URL"/>
+    <meta name="author" content="Antigraviti Dev"/>
+    <meta property="og:title" content="AlpURL — Short Links. Smart Connections. Infinite Possibilities."/>
+    <meta property="og:description" content="The AI-powered URL intelligence platform. Shorten, track, and optimize every link — free forever."/>
+    <meta property="og:type" content="website"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <title>AlpURL — Short Links. Smart Connections. Infinite Possibilities.</title>
+
     <!-- Google Fonts & Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Geist:wght@600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    
-    <!-- Chart.js CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Tailwind CSS with custom configuration -->
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
         tailwind.config = {
@@ -20,499 +27,708 @@
             theme: {
                 extend: {
                     "colors": {
-                            "surface-container": "#171f33",
-                            "border-glass": "rgba(255, 255, 255, 0.1)",
-                            "on-tertiary-container": "#bdffdb",
-                            "on-tertiary-fixed-variant": "#005236",
-                            "surface-glass": "rgba(15, 23, 42, 0.7)",
-                            "outline": "#8d90a0",
-                            "inverse-on-surface": "#283044",
-                            "on-surface-variant": "#c3c6d7",
-                            "on-secondary-container": "#00424e",
-                            "bg-dark": "#0F172A",
-                            "secondary": "#4cd7f6",
-                            "surface-container-high": "#222a3d",
-                            "primary": "#b4c5ff",
-                            "on-background": "#dae2fd",
-                            "on-secondary": "#003640",
-                            "on-primary-fixed-variant": "#003ea8",
-                            "primary-fixed": "#dbe1ff",
-                            "on-tertiary-fixed": "#002113",
-                            "inverse-surface": "#dae2fd",
-                            "surface-bright": "#31394d",
-                            "secondary-fixed": "#acedff",
-                            "surface-dim": "#0b1326",
-                            "inverse-primary": "#0053db",
-                            "bg-light": "#F8FAFC",
-                            "on-primary-fixed": "#00174b",
-                            "surface-container-lowest": "#060e20",
-                            "on-tertiary": "#003824",
-                            "secondary-fixed-dim": "#4cd7f6",
-                            "tertiary-container": "#007d55",
-                            "error": "#ffb4ab",
-                            "on-primary": "#002a78",
-                            "surface": "#0b1326",
-                            "primary-fixed-dim": "#b4c5ff",
-                            "on-surface": "#dae2fd",
-                            "surface-container-low": "#131b2e",
-                            "tertiary": "#4edea3",
-                            "outline-variant": "#434655",
-                            "tertiary-fixed-dim": "#4edea3",
-                            "surface-container-highest": "#2d3449",
-                            "surface-variant": "#2d3449",
-                            "on-error-container": "#ffdad6",
-                            "on-secondary-fixed": "#001f26",
-                            "on-error": "#690005",
-                            "surface-tint": "#b4c5ff",
-                            "on-primary-container": "#eeefff",
-                            "error-container": "#93000a",
-                            "tertiary-fixed": "#6ffbbe",
-                            "on-secondary-fixed-variant": "#004e5c",
-                            "primary-container": "#2563eb",
-                            "background": "#0b1326",
-                            "secondary-container": "#03b5d3"
+                        "surface-container": "#171f33","border-glass": "rgba(255,255,255,0.1)","on-tertiary-container": "#bdffdb",
+                        "on-tertiary-fixed-variant": "#005236","surface-glass": "rgba(15,23,42,0.7)","outline": "#8d90a0",
+                        "inverse-on-surface": "#283044","on-surface-variant": "#c3c6d7","on-secondary-container": "#00424e",
+                        "bg-dark": "#0F172A","secondary": "#4cd7f6","surface-container-high": "#222a3d","primary": "#b4c5ff",
+                        "on-background": "#dae2fd","on-secondary": "#003640","on-primary-fixed-variant": "#003ea8",
+                        "primary-fixed": "#dbe1ff","on-tertiary-fixed": "#002113","inverse-surface": "#dae2fd",
+                        "surface-bright": "#31394d","secondary-fixed": "#acedff","surface-dim": "#0b1326",
+                        "inverse-primary": "#0053db","bg-light": "#F8FAFC","on-primary-fixed": "#00174b",
+                        "surface-container-lowest": "#060e20","on-tertiary": "#003824","secondary-fixed-dim": "#4cd7f6",
+                        "tertiary-container": "#007d55","error": "#ffb4ab","on-primary": "#002a78","surface": "#0b1326",
+                        "primary-fixed-dim": "#b4c5ff","on-surface": "#dae2fd","surface-container-low": "#131b2e",
+                        "tertiary": "#4edea3","outline-variant": "#434655","tertiary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#2d3449","surface-variant": "#2d3449","on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#001f26","on-error": "#690005","surface-tint": "#b4c5ff",
+                        "on-primary-container": "#eeefff","error-container": "#93000a","tertiary-fixed": "#6ffbbe",
+                        "on-secondary-fixed-variant": "#004e5c","primary-container": "#2563eb","background": "#0b1326",
+                        "secondary-container": "#03b5d3"
                     },
-                    "borderRadius": {
-                            "DEFAULT": "0.25rem",
-                            "lg": "0.5rem",
-                            "xl": "0.75rem",
-                            "full": "9999px"
-                    },
-                    "spacing": {
-                            "max-width": "1280px",
-                            "margin-mobile": "16px",
-                            "base": "4px",
-                            "md": "1.5rem",
-                            "xl": "4rem",
-                            "lg": "2.5rem",
-                            "xs": "0.5rem",
-                            "sm": "1rem",
-                            "gutter": "24px"
-                    },
-                    "fontFamily": {
-                            "headline-md": ["Geist", "sans-serif"],
-                            "body-lg": ["Inter", "sans-serif"],
-                            "headline-lg-mobile": ["Geist", "sans-serif"],
-                            "display-xl": ["Geist", "sans-serif"],
-                            "label-mono": ["JetBrains Mono", "monospace"],
-                            "headline-lg": ["Geist", "sans-serif"],
-                            "body-md": ["Inter", "sans-serif"],
-                            "button": ["Inter", "sans-serif"],
-                            "body-sm": ["Inter", "sans-serif"]
-                    },
-                    "fontSize": {
-                            "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
-                            "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
-                            "display-xl": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
-                            "label-mono": ["13px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
-                            "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
-                            "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
-                            "button": ["14px", {"lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "600"}],
-                            "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}]
-                    }
+                    "borderRadius": {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+                    "spacing": {"max-width":"1280px","margin-mobile":"16px","base":"4px","md":"1.5rem","xl":"4rem","lg":"2.5rem","xs":"0.5rem","sm":"1rem","gutter":"24px"},
+                    "fontFamily": {"headline-md":["Geist","sans-serif"],"body-lg":["Inter","sans-serif"],"headline-lg-mobile":["Geist","sans-serif"],"display-xl":["Geist","sans-serif"],"label-mono":["JetBrains Mono","monospace"],"headline-lg":["Geist","sans-serif"],"body-md":["Inter","sans-serif"],"button":["Inter","sans-serif"],"body-sm":["Inter","sans-serif"]},
+                    "fontSize": {"headline-md":["24px",{"lineHeight":"1.3","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-lg-mobile":["32px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"600"}],"display-xl":["64px",{"lineHeight":"1.1","letterSpacing":"-0.04em","fontWeight":"700"}],"label-mono":["13px",{"lineHeight":"1.4","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"button":["14px",{"lineHeight":"1","letterSpacing":"0.01em","fontWeight":"600"}],"body-sm":["14px",{"lineHeight":"1.5","fontWeight":"400"}]}
                 }
             }
         }
     </script>
+
     <style>
-        .glass-card {
-            background-color: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
+        /* ── Glassmorphism ── */
+        .glass-card{background:rgba(15,23,42,.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:.75rem}
+        .neon-glow{box-shadow:0 0 20px -5px #2563eb}
+
+        /* ── Animations ── */
+        @keyframes pulse-dot{0%{transform:scale(.95);box-shadow:0 0 0 0 rgba(78,222,163,.7)}70%{transform:scale(1);box-shadow:0 0 0 10px rgba(78,222,163,0)}100%{transform:scale(.95);box-shadow:0 0 0 0 rgba(78,222,163,0)}}
+        .animate-pulse-dot{animation:pulse-dot 2s infinite}
+        @keyframes fadeInDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        .animate-fade-in{animation:fadeInDown .18s ease-out}
+        @keyframes spin-once{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .rotating .material-symbols-outlined{animation:spin-once .7s ease-in-out}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+        .animate-float{animation:float 6s ease-in-out infinite}
+        @keyframes reveal{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+        .reveal-on-scroll{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+        .reveal-on-scroll.revealed{opacity:1;transform:translateY(0)}
+
+        /* ── Scrollbar ── */
+        .custom-scrollbar::-webkit-scrollbar{width:6px;height:6px}
+        .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+        .custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.15)}
+
+        /* ── Dashboard sidebar nav ── */
+        .nav-link{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border-radius:.5rem;color:#c3c6d7;font-size:14px;font-weight:500;transition:all .2s;cursor:pointer;text-decoration:none;user-select:none}
+        .nav-link:hover{color:#dae2fd;background:rgba(255,255,255,.05)}
+        .nav-link.active{color:#b4c5ff;font-weight:700;background:rgba(180,197,255,.1)}
+        .nav-link .material-symbols-outlined{font-size:20px}
+        .nav-link.active .material-symbols-outlined{font-variation-settings:'FILL' 1}
+        .nav-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#434655;padding:0 .75rem;margin-top:1rem;margin-bottom:.25rem;display:block}
+
+        /* ── Public nav link ── */
+        .pub-nav-link{padding:.375rem .75rem;border-radius:.5rem;font-size:14px;font-weight:500;color:#c3c6d7;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap;user-select:none}
+        .pub-nav-link:hover{color:#dae2fd;background:rgba(255,255,255,.05)}
+        .pub-nav-link.active{color:#b4c5ff;font-weight:600;background:rgba(180,197,255,.08)}
+        .pub-mobile-link{display:block;padding:.75rem 1.5rem;color:#c3c6d7;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:all .2s;border:none;background:transparent;width:100%;text-align:left}
+        .pub-mobile-link:hover{color:#dae2fd;background:rgba(255,255,255,.04)}
+
+        /* ── Hero tabs ── */
+        .hero-tab{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.125rem;border-radius:.625rem;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:#c3c6d7;border:none;background:transparent}
+        .hero-tab:hover{color:#dae2fd;background:rgba(255,255,255,.05)}
+        .hero-tab.active{color:#b4c5ff;background:rgba(180,197,255,.1)}
+
+        /* ── QR type buttons ── */
+        .qr-type-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:.5rem .625rem;border-radius:.625rem;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:#c3c6d7;border:1.5px solid rgba(255,255,255,.08);background:rgba(0,0,0,.15);white-space:nowrap;min-width:56px}
+        .qr-type-btn:hover{color:#dae2fd;border-color:rgba(255,255,255,.2)}
+        .qr-type-btn.active{color:#b4c5ff;border-color:#b4c5ff;background:rgba(180,197,255,.1)}
+        .qr-type-btn .material-symbols-outlined{font-size:18px}
+
+        /* ── Auth tabs ── */
+        .auth-tab{flex:1;padding:.5rem;text-align:center;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;color:#c3c6d7;background:none;border-top:none;border-left:none;border-right:none}
+        .auth-tab.active{color:#b4c5ff;border-bottom-color:#b4c5ff}
+
+        /* ── Dropdowns ── */
+        .dropdown-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:200}
+
+        /* ── Badges ── */
+        .badge{display:inline-flex;align-items:center;padding:.1rem .5rem;border-radius:9999px;font-size:11px;font-weight:600}
+        .badge-primary{background:rgba(180,197,255,.15);color:#b4c5ff;border:1px solid rgba(180,197,255,.25)}
+        .badge-success{background:rgba(78,222,163,.15);color:#4edea3;border:1px solid rgba(78,222,163,.25)}
+        .badge-warning{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.25)}
+        .badge-error{background:rgba(255,180,171,.15);color:#ffb4ab;border:1px solid rgba(255,180,171,.25)}
+        .badge-muted{background:rgba(141,144,160,.15);color:#8d90a0;border:1px solid rgba(141,144,160,.25)}
+        .badge-secondary{background:rgba(76,215,246,.15);color:#4cd7f6;border:1px solid rgba(76,215,246,.25)}
+
+        /* ── Toggle ── */
+        .toggle-wrap{position:relative;width:44px;height:24px;display:inline-block}
+        .toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+        .toggle-slider{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,.1);border-radius:24px;transition:.3s}
+        .toggle-slider::before{content:"";position:absolute;height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}
+        .toggle-wrap input:checked+.toggle-slider{background:#b4c5ff}
+        .toggle-wrap input:checked+.toggle-slider::before{transform:translateX(20px);background:#002a78}
+
+        /* ── Form inputs ── */
+        .form-input{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:.75rem;padding:.625rem .875rem;color:#dae2fd;font-size:14px;width:100%;transition:all .2s;font-family:'Inter',sans-serif}
+        .form-input:focus{outline:none;border-color:#b4c5ff;box-shadow:0 0 0 3px rgba(180,197,255,.1)}
+        .form-input::placeholder{color:#434655}
+        select.form-input{cursor:pointer}
+        textarea.form-input{resize:vertical}
+
+        /* ── Code block ── */
+        .code-block{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);border-radius:.75rem;padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:#c3c6d7;overflow-x:auto;white-space:pre}
+        .code-kw{color:#b4c5ff}.code-str{color:#4edea3}.code-num{color:#4cd7f6}.code-cmt{color:#434655;font-style:italic}.code-fn{color:#fbbf24}
+
+        /* ── Settings tabs ── */
+        .stab{padding:.5rem 1rem;border-radius:.5rem;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;color:#c3c6d7;border:none;background:transparent;white-space:nowrap;text-align:left;width:100%}
+        .stab.active{background:rgba(180,197,255,.1);color:#b4c5ff;font-weight:600}
+        .stab:hover:not(.active){background:rgba(255,255,255,.04);color:#dae2fd}
+
+        /* ── QR studio style btns ── */
+        .qr-ec-btn{flex:1;padding:.375rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);color:#c3c6d7;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace}
+        .qr-ec-btn.active{background:rgba(180,197,255,.15);border-color:#b4c5ff;color:#b4c5ff}
+
+        /* ── Pagination ── */
+        .page-btn{min-width:32px;height:32px;padding:0 6px;border-radius:.5rem;border:1px solid rgba(255,255,255,.1);background:transparent;color:#c3c6d7;font-size:13px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center}
+        .page-btn:hover{background:rgba(255,255,255,.06);color:#dae2fd}
+        .page-btn.active{background:rgba(180,197,255,.12);border-color:#b4c5ff;color:#b4c5ff;font-weight:600}
+        .page-btn:disabled{opacity:.35;cursor:not-allowed}
+
+        /* ── FAQ ── */
+        .pub-faq-item{border-bottom:1px solid rgba(255,255,255,.06)}
+        .pub-faq-q{display:flex;justify-content:space-between;align-items:center;padding:1.125rem 0;cursor:pointer;font-weight:600;color:#dae2fd;transition:color .2s}
+        .pub-faq-q:hover{color:#b4c5ff}
+        .pub-faq-a{display:none;padding-bottom:1rem;color:#c3c6d7;font-size:14px;line-height:1.7}
+        .pub-faq-item.open .pub-faq-a{display:block}
+        .pub-faq-item.open .faq-chev{transform:rotate(180deg)}
+        .faq-chev{transition:transform .2s;flex-shrink:0}
+        .dash-faq-item{border-bottom:1px solid rgba(255,255,255,.06)}
+        .dash-faq-item .faq-question{display:flex;justify-content:space-between;align-items:center;padding:1rem 0;cursor:pointer}
+        .dash-faq-item .faq-answer{display:none;padding-bottom:1rem;color:#c3c6d7;font-size:14px;line-height:1.6}
+        .dash-faq-item.open .faq-answer{display:block}
+        .dash-faq-item.open .faq-chevron{transform:rotate(180deg)}
+        .faq-chevron{transition:transform .2s}
+
+        /* ── Profile menu item ── */
+        .profile-menu-item{width:100%;display:flex;align-items:center;gap:.75rem;padding:.625rem 1rem;font-size:14px;font-weight:500;color:#c3c6d7;transition:all .15s;cursor:pointer;border:none;background:transparent;text-align:left}
+        .profile-menu-item:hover{color:#dae2fd;background:rgba(255,255,255,.05)}
+
+        /* ── Public section layouts ── */
+        .pub-section{padding:5rem 1.5rem}
+        .pub-section-sm{padding:3.5rem 1.5rem}
+        .pub-container{max-width:1200px;margin:0 auto;width:100%}
+        .pub-section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#4cd7f6;margin-bottom:.75rem;display:block;text-align:center}
+        .pub-section-title{font-size:clamp(28px,5vw,42px);font-weight:700;line-height:1.15;letter-spacing:-.02em;color:#dae2fd;text-align:center;margin-bottom:1rem;font-family:'Geist',sans-serif}
+        .pub-section-subtitle{font-size:16px;color:#c3c6d7;text-align:center;max-width:600px;margin:0 auto 3rem;line-height:1.65}
+
+        /* ── Feature card ── */
+        .feat-card{background:rgba(15,23,42,.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:1rem;padding:1.75rem;transition:all .35s}
+        .feat-card:hover{border-color:rgba(180,197,255,.2);transform:translateY(-3px);box-shadow:0 12px 40px -8px rgba(180,197,255,.08)}
+
+        /* ── How-it-works step ── */
+        .step-num{width:52px;height:52px;border-radius:50%;background:rgba(180,197,255,.1);border:1px solid rgba(180,197,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#b4c5ff;margin:0 auto 1.25rem}
+
+        /* ── Testimonial card ── */
+        .testi-card{background:rgba(15,23,42,.65);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:1rem;padding:1.75rem}
+
+        /* ══════════════════════════════════════════════════════════════
+           PREMIUM LIGHT THEME — Apple / Stripe / Linear quality
+           ══════════════════════════════════════════════════════════════ */
+
+        html.light{color-scheme:light}
+        html.light body{background-color:#F8FAFC!important;color:#0f172a!important}
+
+        /* ── Public Nav ── */
+        html.light #public-nav{background:rgba(248,250,252,.95)!important;border-color:rgba(15,23,42,.08)!important;box-shadow:0 1px 0 rgba(15,23,42,.06)!important}
+        html.light .pub-nav-link{color:#475569!important}
+        html.light .pub-nav-link:hover{color:#0f172a!important;background:rgba(15,23,42,.05)!important}
+        html.light .pub-nav-link.active{color:#1d4ed8!important;background:rgba(29,78,216,.07)!important}
+        html.light .pub-mobile-link{color:#475569!important}
+        html.light #pub-mobile-menu{background:#F1F5F9!important;border-color:rgba(15,23,42,.08)!important;box-shadow:0 8px 30px rgba(15,23,42,.08)!important}
+
+        /* ── Glass cards — elevated white surfaces ── */
+        html.light .glass-card{
+            background:rgba(255,255,255,.95)!important;
+            border-color:rgba(15,23,42,.08)!important;
+            box-shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.04)!important;
         }
-        .neon-glow {
-            box-shadow: 0 0 20px -5px #2563eb;
+        html.light .glass-card:hover{
+            box-shadow:0 2px 8px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.06)!important;
         }
-        
-        @keyframes pulse-dot {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(78, 222, 163, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
-        }
-        .animate-pulse-dot {
-            animation: pulse-dot 2s infinite;
+        html.light .feat-card,html.light .testi-card{
+            background:rgba(255,255,255,.95)!important;
+            border-color:rgba(15,23,42,.08)!important;
+            box-shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.04)!important;
         }
 
-        .chart-grid {
-            background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            background-position: center bottom;
+        /* ── Section backgrounds for visual depth ── */
+        html.light .pub-section{background-color:transparent}
+        html.light .bg-surface-container\/20,html.light [class*="bg-surface-container"]{background-color:#F1F5F9!important}
+        html.light .bg-surface-container{background-color:#F1F5F9!important}
+        html.light .bg-surface-container-high{background-color:#E2E8F0!important}
+        html.light .bg-surface-container-low{background-color:#F8FAFC!important}
+        html.light .bg-black\/30,html.light [class*="bg-black"]{background:rgba(15,23,42,.04)!important}
+
+        /* ── Typography ── */
+        html.light .pub-section-title{color:#0f172a!important}
+        html.light .pub-section-subtitle{color:#475569!important}
+        html.light .text-on-surface{color:#0f172a!important}
+        html.light .text-on-surface-variant{color:#64748b!important}
+        html.light .text-outline{color:#94a3b8!important}
+
+        /* ── FAQ ── */
+        html.light .pub-faq-q{color:#0f172a!important}
+        html.light .pub-faq-a{color:#475569!important}
+        html.light .pub-faq-item{border-color:rgba(15,23,42,.08)!important}
+
+        /* ── Hero tabs ── */
+        html.light .hero-tab{color:#475569!important}
+        html.light .hero-tab.active{color:#1d4ed8!important;background:rgba(29,78,216,.07)!important}
+
+        /* ── QR type buttons ── */
+        html.light .qr-type-btn{color:#475569!important;border-color:rgba(15,23,42,.12)!important;background:rgba(15,23,42,.03)!important}
+        html.light .qr-type-btn.active{color:#1d4ed8!important;border-color:#1d4ed8!important;background:rgba(29,78,216,.06)!important}
+
+        /* ── Form inputs ── */
+        html.light .form-input{
+            background:#fff!important;
+            border-color:rgba(15,23,42,.15)!important;
+            color:#0f172a!important;
+            box-shadow:0 1px 2px rgba(15,23,42,.04)!important;
+        }
+        html.light .form-input:focus{
+            border-color:#1d4ed8!important;
+            box-shadow:0 0 0 3px rgba(29,78,216,.1)!important;
+        }
+        html.light .form-input::placeholder{color:#94a3b8!important}
+
+        /* ── Code blocks ── */
+        html.light .code-block{background:#F1F5F9!important;border-color:rgba(15,23,42,.1)!important;color:#334155!important}
+        html.light .pub-code-block{background:#F1F5F9!important;border-color:rgba(15,23,42,.1)!important;color:#334155!important}
+        html.light code{background:#E2E8F0!important;color:#1d4ed8!important}
+
+        /* ── Dashboard sidebar ── */
+        html.light aside#sidebar{
+            background:#F1F5F9!important;
+            border-color:rgba(15,23,42,.08)!important;
+            box-shadow:1px 0 0 rgba(15,23,42,.06)!important;
+        }
+        html.light #dash-header{
+            background:rgba(248,250,252,.95)!important;
+            border-color:rgba(15,23,42,.08)!important;
+            box-shadow:0 1px 0 rgba(15,23,42,.06)!important;
+        }
+        html.light .nav-link{color:#475569!important}
+        html.light .nav-link:hover{color:#0f172a!important;background:rgba(15,23,42,.05)!important}
+        html.light .nav-link.active{color:#1d4ed8!important;background:rgba(29,78,216,.08)!important;font-weight:700!important}
+        html.light .nav-section-label{color:#94a3b8!important}
+        html.light #sidebar .rounded-xl.border{background:#fff!important;border-color:rgba(15,23,42,.1)!important;box-shadow:0 1px 4px rgba(15,23,42,.06)!important}
+
+        /* ── Settings tabs ── */
+        html.light .stab{color:#475569!important}
+        html.light .stab.active{color:#1d4ed8!important;background:rgba(29,78,216,.07)!important}
+        html.light .stab:hover:not(.active){color:#0f172a!important;background:rgba(15,23,42,.04)!important}
+
+        /* ── Badges ── */
+        html.light .badge-primary{background:rgba(29,78,216,.1)!important;color:#1d4ed8!important;border-color:rgba(29,78,216,.2)!important}
+        html.light .badge-success{background:rgba(22,163,74,.1)!important;color:#16a34a!important;border-color:rgba(22,163,74,.2)!important}
+        html.light .badge-warning{background:rgba(202,138,4,.1)!important;color:#ca8a04!important;border-color:rgba(202,138,4,.2)!important}
+        html.light .badge-muted{background:rgba(100,116,139,.1)!important;color:#64748b!important;border-color:rgba(100,116,139,.2)!important}
+        html.light .badge-secondary{background:rgba(14,165,233,.1)!important;color:#0284c7!important;border-color:rgba(14,165,233,.2)!important}
+
+        /* ── Pagination ── */
+        html.light .page-btn{border-color:rgba(15,23,42,.12)!important;color:#475569!important;background:#fff!important}
+        html.light .page-btn:hover{background:#F1F5F9!important;color:#0f172a!important}
+        html.light .page-btn.active{background:rgba(29,78,216,.1)!important;border-color:#1d4ed8!important;color:#1d4ed8!important}
+
+        /* ── Auth tabs ── */
+        html.light .auth-tab{color:#475569!important}
+        html.light .auth-tab.active{color:#1d4ed8!important;border-bottom-color:#1d4ed8!important}
+
+        /* ── Toggle switch ── */
+        html.light .toggle-slider{background:rgba(15,23,42,.12)!important}
+        html.light .toggle-wrap input:checked+.toggle-slider{background:#1d4ed8!important}
+        html.light .toggle-wrap input:checked+.toggle-slider::before{background:#fff!important}
+
+        /* ── Profile menu / dropdown panels ── */
+        html.light .profile-menu-item{color:#475569!important}
+        html.light .profile-menu-item:hover{color:#0f172a!important;background:rgba(15,23,42,.05)!important}
+        html.light #profile-menu,html.light #pub-profile-dropdown,html.light #notification-panel{
+            background:rgba(255,255,255,.98)!important;
+            border-color:rgba(15,23,42,.1)!important;
+            box-shadow:0 4px 24px rgba(15,23,42,.12),0 1px 4px rgba(15,23,42,.08)!important;
+        }
+        html.light #search-results{
+            background:rgba(255,255,255,.98)!important;
+            border-color:rgba(15,23,42,.1)!important;
+            box-shadow:0 4px 24px rgba(15,23,42,.12)!important;
         }
 
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
+        /* ── Tables ── */
+        html.light table thead tr{border-color:rgba(15,23,42,.08)!important}
+        html.light table tbody tr:hover td{background:rgba(29,78,216,.03)!important}
+        html.light table tr{border-color:rgba(15,23,42,.06)!important}
+
+        /* ── Border-glass for light ── */
+        html.light .border-border-glass{border-color:rgba(15,23,42,.09)!important}
+        html.light .border-border-glass\/40{border-color:rgba(15,23,42,.07)!important}
+        html.light .border-t{border-color:rgba(15,23,42,.08)!important}
+        html.light .border-b{border-color:rgba(15,23,42,.08)!important}
+
+        /* ── QR studio buttons ── */
+        html.light .qr-ec-btn{background:#F1F5F9!important;border-color:rgba(15,23,42,.12)!important;color:#475569!important}
+        html.light .qr-ec-btn.active{background:rgba(29,78,216,.08)!important;border-color:#1d4ed8!important;color:#1d4ed8!important}
+
+        /* ── Auth modal ── */
+        html.light #auth-modal .glass-card{background:#fff!important;border-color:rgba(15,23,42,.1)!important}
+
+        /* ── Custom scrollbar for light ── */
+        html.light .custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(15,23,42,.12)}
+        html.light .custom-scrollbar::-webkit-scrollbar-thumb:hover{background:rgba(15,23,42,.2)}
+
+        /* ── Dark neon glow → blue for light ── */
+        html.light .neon-glow{box-shadow:0 0 20px -5px rgba(29,78,216,.35)!important}
+
+        /* ── Overlay backgrounds ── */
+        html.light .bg-surface-glass{background:rgba(248,250,252,.95)!important}
+        html.light .bg-surface-dim{background:#EEF2F7!important}
+        html.light footer{background:#EEF2F7!important;border-color:rgba(15,23,42,.08)!important}
     </style>
 </head>
-<body class="bg-background text-on-background antialiased min-h-screen flex selection:bg-primary selection:text-on-primary">
-    <!-- SideNavBar Component -->
-    <aside class="w-[280px] h-screen fixed left-0 top-0 border-r border-border-glass shadow-sm bg-surface-container flex flex-col p-md z-50">
-        <div class="flex items-center gap-sm mb-xl px-sm">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">link</span>
-            </div>
-            <div>
-                <h1 class="font-headline-md text-headline-md font-bold text-primary">Lilliput</h1>
-                <p class="font-label-mono text-label-mono text-on-surface-variant">NanoURL Core Engine</p>
+
+<body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  PUBLIC NAVIGATION                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<nav id="public-nav" class="fixed top-0 left-0 right-0 z-50 h-16 bg-surface-glass backdrop-blur-xl border-b border-border-glass flex items-center px-6 gap-4">
+    <!-- Logo -->
+    <a href="#/" id="pub-logo" class="flex items-center gap-2.5 shrink-0 cursor-pointer" aria-label="AlpURL Home">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0 shadow-lg" style="box-shadow:0 0 14px -4px #b4c5ff;">
+            <span class="material-symbols-outlined text-on-primary-fixed" style="font-size:16px;font-variation-settings:'FILL' 1;">link</span>
+        </div>
+        <span class="font-bold text-[18px] text-primary" style="font-family:'Geist',sans-serif;">AlpURL</span>
+    </a>
+
+    <!-- Desktop nav links -->
+    <div class="hidden md:flex items-center gap-0.5 flex-1 mx-4" id="pub-nav-links">
+        <a class="pub-nav-link active" data-pub-page="home"            href="#/">Home</a>
+        <a class="pub-nav-link"        data-pub-page="pub-links"       href="#/links">Short Links</a>
+        <a class="pub-nav-link"        data-pub-page="pub-qr"          href="#/qr">QR Generator</a>
+        <a class="pub-nav-link"        data-pub-page="pub-developers"  href="#/developers">Developers</a>
+        <a class="pub-nav-link"        data-pub-page="pub-about"       href="#/about">About</a>
+        <a class="pub-nav-link"        data-pub-page="pub-contact"     href="#/contact">Contact</a>
+    </div>
+
+    <!-- Right side -->
+    <div class="ml-auto flex items-center gap-2.5 shrink-0">
+        <!-- Guest: login + signup -->
+        <div id="pub-guest-btns" class="flex items-center gap-2">
+            <a href="#/login" id="pub-btn-login" class="px-4 py-1.5 border border-border-glass rounded-full text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-all text-sm font-semibold flex items-center justify-center">Log In</a>
+            <a href="#/register" id="pub-btn-signup" class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors neon-glow flex items-center justify-center">Sign Up Free</a>
+        </div>
+
+        <!-- Authed: user menu + dashboard btn -->
+        <div id="pub-authed-ui" class="hidden flex items-center gap-2">
+            <button id="pub-btn-dashboard" class="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors neon-glow">
+                <span class="material-symbols-outlined" style="font-size:16px;">dashboard</span>Dashboard
+            </button>
+            <div class="relative" id="pub-profile-wrap">
+                <button id="pub-profile-btn" class="w-8 h-8 rounded-full overflow-hidden border-2 border-border-glass hover:border-primary/60 transition-all" aria-label="User menu">
+                    <img id="pub-avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg" class="w-full h-full object-cover" alt="User"/>
+                </button>
+                <div id="pub-profile-dropdown" class="hidden dropdown-panel glass-card shadow-2xl animate-fade-in overflow-hidden" style="min-width:200px;" role="menu">
+                    <div class="px-4 py-3 border-b border-border-glass/40">
+                        <p class="font-semibold text-on-surface text-sm" id="pub-user-name">User</p>
+                        <p class="text-on-surface-variant text-xs mt-0.5" id="pub-user-email">user@example.com</p>
+                    </div>
+                    <div class="py-1">
+                        <a href="#/dashboard" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">dashboard</span>Dashboard</a>
+                        <a href="#/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
+                        <hr class="border-border-glass/40 my-1"/>
+                        <button class="profile-menu-item" id="pub-logout" style="color:#ffb4ab;"><span class="material-symbols-outlined" style="font-size:18px;">logout</span>Sign Out</button>
+                    </div>
+                </div>
             </div>
         </div>
-        <nav class="flex-1 flex flex-col gap-base font-body-md text-body-md overflow-y-auto pr-sm custom-scrollbar">
-            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-primary font-bold bg-primary/10 scale-95 active:scale-100 transition-transform" href="#" id="nav-dashboard">
-                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-                Dashboard
-            </a>
-            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#" id="nav-links">
-                <span class="material-symbols-outlined">link</span>
-                Links Registry
-            </a>
-            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#" id="nav-analytics">
-                <span class="material-symbols-outlined">insights</span>
-                Analytics
-            </a>
-            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
-                <span class="material-symbols-outlined">api</span>
-                API Reference
-            </a>
-            <a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
-                <span class="material-symbols-outlined">settings</span>
-                Settings
-            </a>
+
+        <!-- Theme toggle -->
+        <button id="pub-theme-btn" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all" aria-label="Toggle theme">
+            <span class="material-symbols-outlined" id="pub-theme-icon" style="font-size:20px;">dark_mode</span>
+        </button>
+
+        <!-- Mobile hamburger -->
+        <button id="pub-mobile-menu-btn" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant" aria-label="Open menu" aria-expanded="false">
+            <span class="material-symbols-outlined" id="pub-hamburger-icon">menu</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div id="pub-mobile-menu" class="hidden fixed top-16 left-0 right-0 z-40 bg-surface-container border-b border-border-glass shadow-2xl py-2">
+    <a class="pub-mobile-link block" href="#/">Home</a>
+    <a class="pub-mobile-link block" href="#/links">Short Links</a>
+    <a class="pub-mobile-link block" href="#/qr">QR Generator</a>
+    <a class="pub-mobile-link block" href="#/developers">Developers</a>
+    <a class="pub-mobile-link block" href="#/about">About</a>
+    <a class="pub-mobile-link block" href="#/contact">Contact</a>
+    <div class="px-6 py-3 flex gap-3 border-t border-border-glass/40 mt-2">
+        <a href="#/login" id="pub-mobile-login" class="flex-1 py-2 border border-border-glass rounded-xl text-center text-sm font-semibold text-on-surface-variant block">Log In</a>
+        <a href="#/register" id="pub-mobile-signup" class="flex-1 py-2 bg-primary text-on-primary rounded-xl text-center text-sm font-semibold block">Sign Up</a>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  PUBLIC LAYOUT — all content rendered by app.js                   -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="public-layout" class="min-h-screen">
+    <div id="page-home"           data-public-page></div>
+    <div id="page-pub-links"      data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-qr"         data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-developers" data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-about"      data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-contact"    data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-login"      data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-register"   data-public-page class="hidden pt-16 min-h-screen"></div>
+    <div id="page-pub-api-docs"   data-public-page class="hidden pt-16 min-h-screen"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  DASHBOARD APP                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="dashboard-app" class="hidden">
+
+    <!-- ── Sidebar ── -->
+    <aside id="sidebar" class="w-[280px] h-screen fixed left-0 top-0 border-r border-border-glass bg-surface-container flex flex-col z-50" style="padding:1.25rem 1rem;">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 mb-5 px-2">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0 shadow-lg" style="box-shadow:0 0 18px -4px #b4c5ff;">
+                <span class="material-symbols-outlined text-on-primary-fixed" style="font-size:18px;font-variation-settings:'FILL' 1;">link</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-[20px] text-primary leading-none" style="font-family:'Geist',sans-serif;">AlpURL</h1>
+                <p class="text-[10px] text-on-surface-variant mt-0.5" style="font-family:'JetBrains Mono',monospace;letter-spacing:.06em;">AI URL Intelligence Platform</p>
+            </div>
+        </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 flex flex-col overflow-y-auto custom-scrollbar" style="gap:2px;">
+            <span class="nav-section-label">Core</span>
+            <a class="nav-link active" id="nav-dashboard"  data-page="dashboard"  href="#/dashboard"  role="button" aria-current="page"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+            <a class="nav-link"        id="nav-links"       data-page="links"       href="#/dashboard/links"       role="button"><span class="material-symbols-outlined">link</span>Links</a>
+            <a class="nav-link"        id="nav-qrcodes"     data-page="qrcodes"     href="#/dashboard/qrcodes"     role="button"><span class="material-symbols-outlined">qr_code_2</span>QR Codes</a>
+            <a class="nav-link"        id="nav-analytics"   data-page="analytics"   href="#/dashboard/analytics"   role="button"><span class="material-symbols-outlined">insights</span>Analytics</a>
+            <a class="nav-link"        id="nav-campaigns"   data-page="campaigns"   href="#/dashboard/campaigns"   role="button"><span class="material-symbols-outlined">campaign</span>Campaigns</a>
+            <a class="nav-link"        id="nav-domains"     data-page="domains"     href="#/dashboard/domains"     role="button"><span class="material-symbols-outlined">language</span>Domains</a>
+            <span class="nav-section-label">Workspace</span>
+            <a class="nav-link"        id="nav-integrations" data-page="integrations" href="#/dashboard/integrations" role="button"><span class="material-symbols-outlined">integration_instructions</span>Integrations</a>
+            <a class="nav-link"        id="nav-teams"        data-page="teams"         href="#/dashboard/teams"         role="button"><span class="material-symbols-outlined">group</span>Teams</a>
+            <span class="nav-section-label">Developer</span>
+            <a class="nav-link"        id="nav-api"          data-page="api"           href="#/dashboard/api"           role="button"><span class="material-symbols-outlined">api</span>API Reference</a>
+            <a class="nav-link"        id="nav-developers"   data-page="developers"    href="#/dashboard/developers"    role="button"><span class="material-symbols-outlined">code</span>Developers</a>
+            <span class="nav-section-label">Account</span>
+            <a class="nav-link"        id="nav-settings"     data-page="settings"      href="#/dashboard/settings"      role="button"><span class="material-symbols-outlined">settings</span>Settings</a>
+            <a class="nav-link"        id="nav-help"         data-page="help"           href="#/dashboard/help"           role="button"><span class="material-symbols-outlined">help_outline</span>Help &amp; Support</a>
         </nav>
-        <div class="mt-auto p-sm bg-surface-container-low rounded-xl border border-border-glass">
-            <p class="font-label-mono text-[10px] text-on-surface-variant uppercase tracking-wider mb-xs">KGS Server Status</p>
-            <div class="flex items-center gap-xs">
-                <span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse-dot"></span>
-                <span class="font-body-sm text-[12px] text-tertiary font-medium">Node-1 Connected</span>
+
+        <!-- User card -->
+        <div class="mt-4 rounded-xl border border-border-glass bg-surface-container-low overflow-hidden">
+            <button id="sidebar-profile-btn" class="w-full p-3 flex items-center gap-3 hover:bg-surface-container-high transition-colors text-left">
+                <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-2 ring-primary/30">
+                    <img id="dash-avatar" alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"/>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold text-on-surface text-sm leading-tight truncate" id="dash-user-name">User</p>
+                    <p class="text-on-surface-variant text-[11px] truncate" id="dash-user-email">user@example.com</p>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant text-[16px] shrink-0">unfold_more</span>
+            </button>
+            <!-- SSE Live Status -->
+            <div class="flex items-center gap-2 border-t border-border-glass/40 px-3 py-2">
+                <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse-dot shrink-0" id="kgs-node-dot"></span>
+                <span class="text-[10px] text-tertiary" id="kgs-node-status" style="font-family:'JetBrains Mono',monospace;">SSE Live</span>
+                <span class="ml-auto text-[10px] text-on-surface-variant font-mono" id="kgs-node-pct">100%</span>
+            </div>
+            <!-- Last sync time -->
+            <div class="px-3 pb-2">
+                <span class="text-[9px] text-on-surface-variant font-mono" id="sync-time-display">Connecting…</span>
             </div>
         </div>
     </aside>
 
-    <!-- TopNavBar Component -->
-    <header class="fixed top-0 right-0 w-[calc(100%-280px)] z-40 bg-surface-glass backdrop-blur-xl border-b border-border-glass shadow-sm flex justify-between items-center h-16 px-lg font-body-sm text-body-sm">
-        <div class="flex items-center gap-md">
-            <div class="relative">
-                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-                <input class="bg-surface-container border border-border-glass rounded-full py-xs pl-xl pr-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 transition-all placeholder-on-surface-variant font-label-mono text-label-mono" placeholder="Search short URL stats..." type="text"/>
-            </div>
+    <!-- ── Dashboard Header ── -->
+    <header id="dash-header" class="fixed top-0 right-0 w-[calc(100%-280px)] z-40 bg-surface-glass backdrop-blur-xl border-b border-border-glass flex justify-between items-center h-16 px-6 gap-4">
+        <!-- Search -->
+        <div class="relative" id="search-container">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px;">search</span>
+            <input id="search-input" class="bg-surface-container border border-border-glass rounded-full py-1.5 pl-10 pr-6 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-56 transition-all placeholder-on-surface-variant text-sm" placeholder="Search links, QR codes…" type="text" autocomplete="off" aria-label="Global search"/>
+            <div id="search-results" class="hidden dropdown-panel glass-card shadow-2xl p-2 animate-fade-in" style="min-width:340px;" role="listbox"><div id="search-results-list"></div></div>
         </div>
-        <div class="flex items-center gap-md">
-            <div class="flex items-center gap-base border-r border-border-glass pr-md mr-xs">
-                <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all duration-200 opacity-80 hover:opacity-100 relative">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full"></span>
+
+        <div class="flex items-center gap-2 ml-auto">
+            <!-- Notifications -->
+            <div class="relative" id="notification-container">
+                <button id="btn-notifications" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all relative" aria-label="Notifications">
+                    <span class="material-symbols-outlined" style="font-size:20px;">notifications</span>
+                    <span id="notif-dot" class="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full"></span>
                 </button>
-                <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all duration-200 opacity-80 hover:opacity-100" id="btn-toggle-theme">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
+                <div id="notification-panel" class="hidden dropdown-panel glass-card shadow-2xl overflow-hidden animate-fade-in" style="min-width:340px;">
+                    <div class="flex justify-between items-center px-4 py-3 border-b border-border-glass/40">
+                        <div class="flex items-center gap-2"><span class="font-semibold text-on-surface text-sm">Notifications</span><span class="badge badge-primary" id="notif-count">0</span></div>
+                        <div class="flex items-center gap-3"><button id="btn-mark-all-read" class="text-xs text-primary hover:underline">Mark all read</button><button id="btn-clear-notifs" class="text-xs text-on-surface-variant hover:text-error transition-colors">Clear all</button></div>
+                    </div>
+                    <div id="notif-list" class="max-h-80 overflow-y-auto custom-scrollbar"></div>
+                    <div class="px-4 py-2.5 border-t border-border-glass/40 text-center"><button class="text-xs text-primary hover:underline">View all notifications</button></div>
+                </div>
             </div>
-            <button class="px-md py-xs rounded-full bg-primary text-on-primary font-button text-button hover:bg-primary/90 transition-colors uppercase tracking-wide neon-glow" id="btn-header-shorten">
-                New Short URL
+
+            <!-- Theme -->
+            <button id="btn-toggle-theme" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all" aria-label="Toggle theme">
+                <span class="material-symbols-outlined" id="theme-icon" style="font-size:20px;">dark_mode</span>
             </button>
-            <div class="w-8 h-8 rounded-full bg-surface-container-highest border border-border-glass overflow-hidden ml-sm">
-                <img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"/>
+
+            <!-- Refresh -->
+            <button id="btn-global-refresh" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all" aria-label="Refresh">
+                <span class="material-symbols-outlined" style="font-size:20px;">refresh</span>
+            </button>
+
+            <div class="w-px h-5 bg-border-glass mx-1"></div>
+
+            <!-- New Link -->
+            <button id="btn-header-shorten" class="px-4 py-1.5 rounded-full bg-primary text-on-primary font-semibold text-sm hover:bg-primary/90 transition-colors uppercase tracking-wide neon-glow flex items-center gap-1" aria-label="Create link">
+                <span class="material-symbols-outlined" style="font-size:16px;">add</span>New Link
+            </button>
+
+            <!-- Profile -->
+            <div class="relative" id="profile-container">
+                <button id="btn-profile-menu" class="w-8 h-8 rounded-full border-2 border-border-glass overflow-hidden hover:border-primary/60 transition-all ml-1" aria-label="Profile menu">
+                    <img alt="Profile" class="w-full h-full object-cover" id="dash-header-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"/>
+                </button>
+                <div id="profile-menu" class="hidden dropdown-panel glass-card shadow-2xl overflow-hidden animate-fade-in" style="min-width:210px;">
+                    <div class="px-4 py-3 border-b border-border-glass/40">
+                        <p class="font-semibold text-on-surface text-sm" id="dash-profile-name">User</p>
+                        <p class="text-on-surface-variant text-xs mt-0.5" id="dash-profile-email">user@example.com</p>
+                    </div>
+                    <div class="py-1">
+                        <a href="#/dashboard/profile" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">person</span>Profile</a>
+                        <a href="#/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
+                        <hr class="border-border-glass/40 my-1"/>
+                        <button class="profile-menu-item" id="dash-logout" style="color:#ffb4ab;"><span class="material-symbols-outlined" style="font-size:18px;">logout</span>Sign Out</button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="ml-[280px] w-[calc(100%-280px)] mt-16 p-lg flex flex-col gap-lg custom-scrollbar">
-        <div class="max-w-[max-width] mx-auto w-full flex flex-col gap-lg">
-            
-            <!-- Page Header & Global Search Bar -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md">
-                <div>
-                    <h2 class="font-headline-lg text-headline-lg text-on-background mb-xs" id="page-title">Performance Overview</h2>
-                    <p class="font-body-md text-body-md text-on-surface-variant">Real-time insights across your shortened redirects.</p>
-                </div>
-                <div class="flex gap-sm">
-                    <button class="glass-card px-md py-xs flex items-center gap-xs font-label-mono text-label-mono text-on-surface hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">calendar_today</span>
-                        Lifetime
-                    </button>
-                    <button class="glass-card px-sm py-xs flex items-center justify-center text-on-surface hover:text-primary transition-colors" id="btn-global-refresh">
-                        <span class="material-symbols-outlined">refresh</span>
-                    </button>
-                </div>
-            </div>
+    <!-- ── Dashboard Main ── -->
+    <main id="dash-main" class="ml-[280px] w-[calc(100%-280px)] mt-16 p-6 flex flex-col gap-6 custom-scrollbar min-h-[calc(100vh-4rem)]">
+        <div id="page-dashboard"    data-page class="max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-links"        data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-qrcodes"      data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-analytics"    data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-campaigns"    data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-domains"      data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-integrations" data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-teams"        data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-api"          data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-developers"   data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-settings"     data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-profile"      data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+        <div id="page-help"         data-page class="hidden max-w-[1280px] mx-auto w-full flex flex-col gap-6"></div>
+    </main>
+</div>
 
-            <!-- Beautiful Shortener Box -->
-            <section class="glass-card p-lg border border-border-glass/40 shadow-xl shadow-primary/5 flex flex-col gap-md">
-                <h3 class="font-headline-md text-[20px] text-on-background font-semibold flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-[22px]">auto_awesome</span>
-                    Create Dynamic Short Link
-                </h3>
-                
-                <form id="shorten-form" class="flex flex-col gap-sm">
-                    <div class="flex flex-col md:flex-row gap-sm items-stretch">
-                        <!-- URL Input -->
-                        <div class="flex-1 glass-card bg-black/30 border border-border-glass p-2 rounded-xl flex items-center gap-sm">
-                            <span class="material-symbols-outlined text-outline-variant px-sm">link</span>
-                            <input class="w-full bg-transparent border-none text-on-surface font-label-mono text-label-mono focus:ring-0 placeholder:text-outline-variant h-10" placeholder="Paste your long destination URL here..." type="url" id="long-url" required/>
-                        </div>
-                        
-                        <!-- Submit Button -->
-                        <button type="submit" class="bg-primary text-on-primary font-button text-button uppercase hover:bg-primary/95 transition-all px-lg rounded-xl h-14 flex items-center justify-center gap-2 whitespace-nowrap neon-glow" id="btn-submit">
-                            <span>Shorten Link</span>
-                            <span class="material-symbols-outlined text-[18px]">arrow_right_alt</span>
-                        </button>
-                    </div>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  AUTH MODAL                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="auth-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-md shadow-2xl overflow-hidden">
+        <!-- Tabs -->
+        <div class="flex border-b border-border-glass/40">
+            <button class="auth-tab active" id="auth-tab-login"    aria-selected="true">Log In</button>
+            <button class="auth-tab"        id="auth-tab-register" aria-selected="false">Create Account</button>
+        </div>
+        <div class="p-6">
+            <p id="auth-title" class="text-lg font-bold text-on-background mb-5">Welcome back to AlpURL</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-md mt-xs">
-                        <div class="flex flex-col gap-base">
-                            <label class="font-body-sm text-xs font-semibold text-on-surface-variant uppercase tracking-wider pl-1" for="custom-alias">Custom Alias (Optional)</label>
-                            <input class="bg-black/30 border border-border-glass rounded-xl py-xs px-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-12 font-label-mono text-label-mono placeholder:text-outline-variant/60" placeholder="e.g., custom-alias" type="text" id="custom-alias" minlength="3" maxlength="50" pattern="^[a-zA-Z0-9\-_]+$"/>
-                        </div>
-                        <div class="flex flex-col gap-base">
-                            <label class="font-body-sm text-xs font-semibold text-on-surface-variant uppercase tracking-wider pl-1" for="expiry-hours">Link Expiry Duration (Optional Hours)</label>
-                            <input class="bg-black/30 border border-border-glass rounded-xl py-xs px-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-12 font-label-mono text-label-mono placeholder:text-outline-variant/60" placeholder="e.g., 24 (Leave blank for default)" type="number" id="expiry-hours" min="1"/>
-                        </div>
-                    </div>
-                </form>
-
-                <!-- Result Panel -->
-                <div id="result-card" class="hidden glass-card bg-surface-container-low/40 p-md border border-primary/20 rounded-xl mt-sm animate-fade-in flex flex-col gap-sm">
-                    <div class="flex justify-between items-center border-b border-border-glass/40 pb-sm">
-                        <h4 class="font-body-lg text-body-md font-semibold text-tertiary flex items-center gap-xs">
-                            <span class="material-symbols-outlined text-tertiary">check_circle</span>
-                            Short Link Created Successfully
-                        </h4>
-                        <span class="font-label-mono text-xs text-on-surface-variant" id="res-key-label">Key: <span id="res-key" class="text-primary font-bold"></span></span>
-                    </div>
-                    <div class="flex gap-sm items-center mt-xs">
-                        <input class="flex-1 bg-black/40 border border-border-glass rounded-xl py-xs px-md text-primary font-label-mono text-label-mono focus:outline-none h-12" id="shortened-url-display" readonly type="text"/>
-                        <button class="px-md bg-secondary/15 border border-secondary/35 text-secondary hover:bg-secondary/25 transition-all rounded-xl h-12 flex items-center gap-xs font-button text-button uppercase" id="btn-copy">
-                            <span class="material-symbols-outlined text-[18px]">content_copy</span>
-                            <span class="copy-text">Copy</span>
-                        </button>
-                    </div>
-                    <div class="flex justify-between text-xs font-label-mono text-on-surface-variant px-sm mt-xs">
-                        <span>Expiry Date: <span id="res-ttl" class="text-on-surface font-semibold"></span></span>
-                        <span>Pre-allocated: Yes</span>
-                    </div>
+            <!-- Login Form -->
+            <form id="login-form" class="flex flex-col gap-4" novalidate>
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="login-email">Email Address</label>
+                <input id="login-email" class="form-input" type="email" placeholder="you@example.com" required autocomplete="email"/></div>
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="login-password">Password</label>
+                <input id="login-password" class="form-input" type="password" placeholder="••••••••" required autocomplete="current-password"/></div>
+                <div class="flex justify-between items-center text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rounded accent-primary"/><span class="text-on-surface-variant">Remember me</span></label>
+                    <button type="button" class="text-primary hover:underline">Forgot password?</button>
                 </div>
-            </section>
+                <button type="submit" class="w-full py-3 bg-primary text-on-primary rounded-xl font-semibold hover:bg-primary/90 transition-colors neon-glow">Log In to AlpURL</button>
+                <button type="button" id="auth-google-btn" class="w-full py-3 border border-border-glass rounded-xl font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continue with Google <span class="text-xs text-outline">(Coming soon)</span>
+                </button>
+                <p class="text-center text-xs text-on-surface-variant">Don't have an account? <button type="button" id="switch-to-register" class="text-primary hover:underline font-semibold">Sign up free</button></p>
+            </form>
 
-            <!-- Bento Stats Grid Layout -->
-            <div class="grid grid-cols-12 gap-md">
-                
-                <!-- Live Redirect Status Tracker (Col span 4) -->
-                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-tertiary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="flex justify-between items-start z-10">
-                        <div class="flex items-center gap-xs text-tertiary font-label-mono text-label-mono uppercase tracking-wider">
-                            <div class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse-dot"></div>
-                            Engine Online
-                        </div>
-                        <span class="material-symbols-outlined text-on-surface-variant">bolt</span>
-                    </div>
-                    <div class="mt-xl z-10">
-                        <div class="font-display-xl text-display-xl text-on-background tabular-nums tracking-tighter" id="stat-total-clicks">0</div>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs flex items-center gap-xs">
-                            <span class="text-tertiary font-bold flex items-center" id="active-redirect-pct">Total Redirects Served</span>
-                        </p>
-                    </div>
+            <!-- Register Form -->
+            <form id="register-form" class="hidden flex flex-col gap-4" novalidate>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="reg-fname">First Name</label>
+                    <input id="reg-fname" class="form-input" type="text" placeholder="Praval" required autocomplete="given-name"/></div>
+                    <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="reg-lname">Last Name</label>
+                    <input id="reg-lname" class="form-input" type="text" placeholder="Sharma" required autocomplete="family-name"/></div>
                 </div>
-                
-                <!-- Quick Stats (Col span 8, internal grid) -->
-                <div class="col-span-12 md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-md">
-                    <!-- Total Links Card -->
-                    <div class="glass-card p-md flex flex-col justify-between">
-                        <div class="flex justify-between items-start">
-                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">Total Links</p>
-                            <span class="material-symbols-outlined text-primary">link</span>
-                        </div>
-                        <div class="mt-md">
-                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums" id="stat-total-links">0</div>
-                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
-                                <div class="h-full bg-primary w-[80%] rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Latency Card -->
-                    <div class="glass-card p-md flex flex-col justify-between">
-                        <div class="flex justify-between items-start">
-                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">Avg. Latency</p>
-                            <span class="material-symbols-outlined text-secondary">speed</span>
-                        </div>
-                        <div class="mt-md">
-                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums">&lt; 8 ms</div>
-                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
-                                <div class="h-full bg-secondary w-[95%] rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- System Uptime Card -->
-                    <div class="glass-card p-md flex flex-col justify-between">
-                        <div class="flex justify-between items-start">
-                            <p class="font-body-sm text-body-sm text-on-surface-variant uppercase tracking-wider font-semibold">System Uptime</p>
-                            <span class="material-symbols-outlined text-tertiary">analytics</span>
-                        </div>
-                        <div class="mt-md">
-                            <div class="font-headline-lg text-headline-lg text-on-background tabular-nums">99.99%</div>
-                            <div class="w-full h-1 bg-surface-container mt-sm rounded-full overflow-hidden">
-                                <div class="h-full bg-tertiary w-[100%] rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="reg-email">Email Address</label>
+                <input id="reg-email" class="form-input" type="email" placeholder="you@example.com" required autocomplete="email"/></div>
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="reg-password">Password</label>
+                <input id="reg-password" class="form-input" type="password" placeholder="Min 8 characters" required autocomplete="new-password"/></div>
+                <div class="text-xs text-on-surface-variant">By creating an account, you agree to our <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>.</div>
+                <button type="submit" class="w-full py-3 bg-primary text-on-primary rounded-xl font-semibold hover:bg-primary/90 transition-colors neon-glow">Create Free Account</button>
+                <p class="text-center text-xs text-on-surface-variant">Already have an account? <button type="button" id="switch-to-login" class="text-primary hover:underline font-semibold">Log in</button></p>
+            </form>
 
-                <!-- Timeline Chart (Col span 12) -->
-                <div class="col-span-12 glass-card p-md flex flex-col h-[380px]">
-                    <div class="flex justify-between items-center mb-md border-b border-border-glass/40 pb-xs">
-                        <h3 class="font-body-lg text-body-lg text-on-background font-semibold flex items-center gap-xs">
-                            <span class="material-symbols-outlined text-primary text-[18px]">trending_up</span>
-                            Traffic Volume Over Time
-                        </h3>
-                        <span class="font-label-mono text-xs text-on-surface-variant">Real-time DB Telemetry</span>
-                    </div>
-                    <div class="flex-1 relative min-h-0 w-full">
-                        <canvas id="clicksChart" class="w-full h-full"></canvas>
-                    </div>
-                </div>
-
-                <!-- Breakdown: Traffic Sources (Col span 4) -->
-                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
-                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
-                        <span class="material-symbols-outlined text-primary text-[18px]">share</span> Referrers
-                    </h3>
-                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
-                        <canvas id="referrersChart" class="w-full h-full max-h-[220px]"></canvas>
-                    </div>
-                </div>
-
-                <!-- Breakdown: Browsers (Col span 4) -->
-                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
-                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
-                        <span class="material-symbols-outlined text-secondary text-[18px]">public</span> Top Browsers
-                    </h3>
-                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
-                        <canvas id="browsersChart" class="w-full h-full max-h-[220px]"></canvas>
-                    </div>
-                </div>
-
-                <!-- Breakdown: Operating Systems (Col span 4) -->
-                <div class="col-span-12 md:col-span-4 glass-card p-md flex flex-col justify-between">
-                    <h3 class="font-body-md text-body-md font-semibold text-on-background mb-md flex items-center gap-xs border-b border-border-glass/40 pb-xs">
-                        <span class="material-symbols-outlined text-tertiary text-[18px]">devices</span> OS Distribution
-                    </h3>
-                    <div class="flex-1 relative min-h-0 w-full flex items-center justify-center">
-                        <canvas id="osChart" class="w-full h-full max-h-[220px]"></canvas>
-                    </div>
-                </div>
-
-                <!-- Link Registry Table (Col span 12) -->
-                <div class="col-span-12 glass-card p-md" id="registry-section">
-                    <div class="flex justify-between items-center mb-md border-b border-border-glass/40 pb-xs">
-                        <h3 class="font-body-lg text-body-lg text-on-background font-semibold flex items-center gap-xs">
-                            <span class="material-symbols-outlined text-primary text-[20px]">list</span>
-                            Active Link Registry
-                        </h3>
-                        <button class="px-sm py-xs border border-border-glass/50 hover:bg-surface-container-high rounded-xl text-on-surface font-button text-button transition-colors flex items-center gap-xs" id="btn-refresh-registry">
-                            <span class="material-symbols-outlined text-[16px]">sync</span>
-                            Refresh
-                        </button>
-                    </div>
-                    
-                    <div class="w-full overflow-x-auto border border-border-glass/40 rounded-xl bg-black/20 custom-scrollbar">
-                        <table class="w-full text-left font-body-sm text-sm border-collapse">
-                            <thead>
-                                <tr class="bg-white/2 border-b border-border-glass/40 text-on-surface-variant font-semibold">
-                                    <th class="p-4">Short Key</th>
-                                    <th class="p-4">Original URL</th>
-                                    <th class="p-4 text-center">Clicks</th>
-                                    <th class="p-4">Created Date</th>
-                                    <th class="p-4 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="registry-list">
-                                <!-- Populated dynamically -->
-                                <tr>
-                                    <td colspan="5" class="p-8 text-center text-on-surface-variant">No links shortened yet. Check KGS!</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+            <div class="mt-4 pt-3 border-t border-border-glass/40 text-center">
+                <button id="auth-continue-guest" class="text-xs text-on-surface-variant hover:text-on-surface transition-colors">Continue without account →</button>
             </div>
         </div>
-    </main>
+        <button id="auth-close" class="absolute top-3 right-3 w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant" aria-label="Close">
+            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+    </div>
+</div>
 
-    <!-- Details/Analytics Log Modal -->
-    <div id="analytics-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in p-sm">
-        <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-4xl max-h-[85vh] flex flex-col p-lg shadow-2xl relative">
-            <div class="flex justify-between items-center border-b border-border-glass/40 pb-md mb-md">
-                <h3 class="font-headline-md text-headline-md text-on-background font-semibold">
-                    Redirection Logs: <span id="modal-key" class="text-primary font-bold">key</span>
-                </h3>
-                <button class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" id="btn-close-modal">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  SHARE MODAL                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="share-modal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-modal="true">
+    <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-sm shadow-2xl p-6 relative">
+        <button id="share-close" class="absolute top-3 right-3 w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant" aria-label="Close">
+            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+        <h3 class="font-bold text-on-background text-lg mb-1">Share Your Link</h3>
+        <p class="text-on-surface-variant text-sm mb-4">Spread the word on your favourite platforms.</p>
+        <div class="flex items-center gap-2 bg-black/30 border border-border-glass rounded-xl px-3 py-2 mb-4">
+            <span id="share-url-display" class="flex-1 font-mono text-primary text-sm truncate"></span>
+            <button id="share-copy-btn" class="shrink-0 text-xs font-semibold text-secondary hover:underline">Copy</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2" id="share-buttons"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  ANALYTICS MODAL                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="analytics-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in p-4" role="dialog" aria-modal="true">
+    <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-4xl max-h-[85vh] flex flex-col p-6 shadow-2xl relative">
+        <div class="flex justify-between items-center border-b border-border-glass/40 pb-4 mb-4">
+            <h3 class="text-xl font-bold text-on-background">Logs: <span id="modal-key" class="text-primary"></span></h3>
+            <button id="btn-close-modal" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant" aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="flex flex-col gap-4 flex-1 min-h-0">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-black/30 border border-border-glass/40 p-4 rounded-xl gap-3">
+                <div class="flex items-center gap-2 min-w-0"><span class="text-xs text-outline">URL:</span><a id="modal-long-url" href="#" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline truncate max-w-[420px] text-sm">—</a></div>
+                <div class="shrink-0"><span class="text-xs text-outline">Hits:</span><span id="modal-clicks-count" class="badge badge-primary ml-1 font-bold">0</span></div>
             </div>
-            
-            <div class="flex flex-col gap-sm flex-1 min-h-0">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-black/30 border border-border-glass/40 p-md rounded-xl font-label-mono text-xs gap-sm">
-                    <div class="flex items-center gap-xs min-w-0">
-                        <span class="text-outline">Long URL:</span>
-                        <a id="modal-long-url" href="#" target="_blank" class="text-primary hover:underline truncate max-w-[450px]">https://...</a>
-                    </div>
-                    <div class="shrink-0">
-                        <span class="text-outline">Hits:</span>
-                        <span id="modal-clicks-count" class="bg-primary/20 text-primary border border-primary/40 px-2 py-0.5 rounded-full font-bold ml-1">0</span>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto border border-border-glass/40 rounded-xl bg-black/20 custom-scrollbar max-h-[400px]">
-                    <table class="w-full text-left font-body-sm text-xs border-collapse">
-                        <thead>
-                            <tr class="bg-white/2 border-b border-border-glass/40 text-on-surface-variant font-semibold sticky top-0 bg-surface-container-high z-10">
-                                <th class="p-3">Timestamp</th>
-                                <th class="p-3">IP Address</th>
-                                <th class="p-3">Browser</th>
-                                <th class="p-3">OS</th>
-                                <th class="p-3">Referrer</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal-logs-list">
-                            <!-- Populated dynamically -->
-                            <tr>
-                                <td colspan="5" class="p-8 text-center text-on-surface-variant">No clicks logged for this URL.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="flex-1 overflow-y-auto border border-border-glass/40 rounded-xl bg-black/20 custom-scrollbar" style="max-height:380px;">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead><tr class="border-b border-border-glass/40 text-on-surface-variant font-semibold sticky top-0 bg-surface-container-high z-10">
+                        <th class="p-3">Timestamp</th><th class="p-3">IP Address</th><th class="p-3">Browser</th><th class="p-3">OS</th><th class="p-3">Referrer</th>
+                    </tr></thead>
+                    <tbody id="modal-logs-list"></tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Frontend logic script link -->
-    <script src="/app.js"></script>
-    <script>
-        // Smooth scroll action for header buttons
-        document.getElementById('btn-header-shorten')?.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-            document.getElementById('long-url')?.focus();
-        });
-    </script>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  CREATE / EDIT LINK MODAL                                           -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="create-link-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in p-4" role="dialog" aria-modal="true">
+    <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-lg flex flex-col p-6 shadow-2xl">
+        <div class="flex justify-between items-center border-b border-border-glass/40 pb-4 mb-4">
+            <h3 id="create-modal-title" class="text-lg font-bold text-on-background">Create New Link</h3>
+            <button id="btn-close-create-modal" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant" aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <form id="create-link-form" class="flex flex-col gap-4" novalidate>
+            <input type="hidden" id="edit-link-key"/>
+            <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="cl-url">Destination URL <span class="text-error">*</span></label>
+            <input class="form-input" type="url" id="cl-url" placeholder="https://example.com/your-long-url" required/></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="cl-alias">Custom Alias</label>
+                <input class="form-input" type="text" id="cl-alias" placeholder="my-link"/></div>
+                <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="cl-expiry">Expiry (hours)</label>
+                <input class="form-input" type="number" id="cl-expiry" placeholder="Never" min="1"/></div>
+            </div>
+            <div><label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5" for="cl-tags">Tags</label>
+            <input class="form-input" type="text" id="cl-tags" placeholder="marketing, social, product"/></div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="btn-cancel-create" class="flex-1 py-2.5 border border-border-glass rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-semibold text-sm">Cancel</button>
+                <button type="submit" id="btn-save-link" class="flex-1 py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors neon-glow">Create Link</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/app.js"></script>
 </body>
 </html>

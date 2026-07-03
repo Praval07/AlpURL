@@ -1,25 +1,28 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 from backend.app.main import app, get_db
-from backend.app.database import Base
+from backend.app.database import get_mongodb_uri
+from pymongo import MongoClient
 
-# Setup clean testing SQLite DB
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_lilliput.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+# Setup clean testing MongoDB Atlas DB using an independent connection for teardown safety
 @pytest.fixture(scope="module")
 def db_session():
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
+    uri = get_mongodb_uri()
+    client = MongoClient(uri)
+    test_db = client.get_database("alpurl_test")
+    
+    # Drop all collections prior to tests to ensure isolation
+    collections_to_clean = ["links", "qrCodes", "analytics", "campaigns", "domains", "apiKeys", "users", "settings"]
+    for collection in collections_to_clean:
+        test_db[collection].drop()
+        
     try:
-        yield db
+        yield test_db
     finally:
-        db.close()
-        Base.metadata.drop_all(bind=engine)
+        # Clean up test database collections after tests
+        for collection in collections_to_clean:
+            test_db[collection].drop()
+        client.close()
 
 @pytest.fixture(scope="module")
 def client(db_session):
