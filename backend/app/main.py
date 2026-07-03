@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List, AsyncGenerator
 
-from .database import init_db, get_db, db_manager
+from .database import init_db, get_db, db_manager, hash_password, verify_password
 from .kgs import kgs_instance
 from .telemetry import log_click_telemetry
 
@@ -170,15 +170,22 @@ async def sse_events(request: Request):
 @app.post("/api/auth/login")
 def login(payload: dict, db = Depends(get_db)):
     email = payload.get("email", "praval@alpurl.dev")
+    password = payload.get("password")
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required.")
+        
     user = db.users.find_one({"email": email})
     
     # Auto-register test users to ensure a smooth, zero-friction experience
     if not user:
         first_name = email.split("@")[0].capitalize() if "@" in email else "Praval"
+        password_hash = hash_password(password)
         user = {
             "first_name": first_name,
             "last_name": "Sharma" if first_name == "Praval" else "User",
             "email": email,
+            "password_hash": password_hash,
             "created_at": datetime.utcnow(),
             "status": "active"
         }
@@ -209,6 +216,16 @@ def login(payload: dict, db = Depends(get_db)):
                 "font_size": "medium",
                 "compact_mode": False
             })
+    else:
+        # User exists, verify password
+        stored_hash = user.get("password_hash")
+        if stored_hash:
+            if not verify_password(stored_hash, password):
+                raise HTTPException(status_code=400, detail="Invalid email or password.")
+        else:
+            # If user existed without a password hash (e.g. legacy/seeded user), update on first login
+            new_hash = hash_password(password)
+            db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": new_hash}})
             
     name = f"{user.get('first_name', 'Praval')} {user.get('last_name', 'Sharma')}".strip()
     return {
@@ -223,8 +240,10 @@ def login(payload: dict, db = Depends(get_db)):
 @app.post("/api/auth/register")
 def register(payload: dict, db = Depends(get_db)):
     email = payload.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required.")
+    password = payload.get("password")
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required.")
         
     existing = db.users.find_one({"email": email})
     if existing:
@@ -232,10 +251,13 @@ def register(payload: dict, db = Depends(get_db)):
         
     first_name = payload.get("first_name", "First")
     last_name = payload.get("last_name", "Last")
+    password_hash = hash_password(password)
+    
     user = {
         "first_name": first_name,
         "last_name": last_name,
         "email": email,
+        "password_hash": password_hash,
         "created_at": datetime.utcnow(),
         "status": "active"
     }
@@ -274,6 +296,7 @@ def register(payload: dict, db = Depends(get_db)):
             "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"
         }
     }
+
 
 # ═══════════════════════════════════════════════════════════════
 #  LINKS CRUD

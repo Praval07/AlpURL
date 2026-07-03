@@ -406,3 +406,25 @@ def get_db():
     except Exception as e:
         print(f"[MongoDB dependency failure] Session error: {e}")
         raise e
+
+def hash_password(password: str) -> str:
+    """Hashes a password securely using PBKDF2-HMAC-SHA256."""
+    import hashlib
+    import os
+    salt = os.urandom(16)
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return salt.hex() + ":" + key.hex()
+
+def verify_password(stored_password_hash: str, provided_password: str) -> bool:
+    """Verifies a password against its stored PBKDF2-HMAC-SHA256 hash."""
+    import hashlib
+    if not stored_password_hash or ":" not in stored_password_hash:
+        return False
+    try:
+        salt_hex, key_hex = stored_password_hash.split(":", 1)
+        salt = bytes.fromhex(salt_hex)
+        expected_key = bytes.fromhex(key_hex)
+        key = hashlib.pbkdf2_hmac('sha256', provided_password.encode('utf-8'), salt, 100000)
+        return key == expected_key
+    except Exception:
+        return False

@@ -72,3 +72,36 @@ def test_dashboard_stats(client):
     assert "total_links" in data
     assert "total_clicks" in data
     assert data["total_links"] == 1
+
+def test_user_registration(client, db_session):
+    # Register a new user
+    payload = {
+        "first_name": "Antigravity",
+        "last_name": "Tester",
+        "email": "tester@alpurl.dev",
+        "password": "strongpassword123"
+    }
+    response = client.post("/api/auth/register", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "user" in data
+    assert data["user"]["email"] == "tester@alpurl.dev"
+
+    # Check MongoDB contains the hashed password
+    user_in_db = db_session.users.find_one({"email": "tester@alpurl.dev"})
+    assert user_in_db is not None
+    assert user_in_db["password_hash"] is not None
+    assert user_in_db["password_hash"] != "strongpassword123"
+
+def test_user_login(client):
+    # Valid login
+    response = client.post("/api/auth/login", json={"email": "tester@alpurl.dev", "password": "strongpassword123"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+
+    # Invalid login
+    response = client.post("/api/auth/login", json={"email": "tester@alpurl.dev", "password": "wrongpassword"})
+    assert response.status_code == 400
+    assert "Invalid email or password" in response.json()["detail"]

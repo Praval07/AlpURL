@@ -18,9 +18,19 @@ const API = {
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
+        // Prepend localhost:8000 when running locally on other ports or file scheme to connect to backend
+        let targetUrl = url;
+        if (url.startsWith("/api/") || url.startsWith("/api")) {
+            if (window.location.protocol === "file:" || 
+                (window.location.hostname === "localhost" && window.location.port !== "8000") ||
+                (window.location.hostname === "127.0.0.1" && window.location.port !== "8000")) {
+                targetUrl = `http://localhost:8000${url}`;
+            }
+        }
+
         try {
             updateSyncStatus("syncing");
-            const res = await fetch(url, options);
+            const res = await fetch(targetUrl, options);
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.detail || "API Request Failed");
@@ -29,7 +39,7 @@ const API = {
             return await res.json();
         } catch (error) {
             updateSyncStatus("offline");
-            console.error(`[API Error] ${method} ${url}:`, error);
+            console.error(`[API Error] ${method} ${targetUrl}:`, error);
             throw error;
         }
     },
