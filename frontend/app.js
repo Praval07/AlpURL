@@ -62,17 +62,10 @@ const API = {
     // QR codes
     getQRCodes() { return this.request("/api/qrcodes"); },
     
-    // Campaigns & Domains
-    getCampaigns() { return this.request("/api/campaigns"); },
-    createCampaign(data) { return this.request("/api/campaigns", "POST", data); },
+    // Domains
     getDomains() { return this.request("/api/domains"); },
     addDomain(domain) { return this.request("/api/domains", "POST", { domain }); },
     deleteDomain(id) { return this.request(`/api/domains/${id}`, "DELETE"); },
-    
-    // API Keys
-    getAPIKeys() { return this.request("/api/apikeys"); },
-    generateAPIKey(name) { return this.request("/api/apikeys", "POST", { name }); },
-    revokeAPIKey(id) { return this.request(`/api/apikeys/${id}`, "DELETE"); },
     
     // Notifications
     getNotifications() { return this.request("/api/notifications"); },
@@ -250,16 +243,16 @@ const RealtimeSync = {
     // Map SSE event type → action handler
     _handlers: {
         link_created(data) {
-            // Optimistically push new link to State.links if not already present
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             if (!State.links.find(l => l.short_key === data.short_key)) {
                 State.links.unshift(data);
             }
-            // Refresh whichever page is active
             if (["dashboard", "links", "analytics", "qrcodes"].includes(State.currentPage)) {
                 refreshActivePageData(true);
             }
         },
         link_updated(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             const idx = State.links.findIndex(l => l.short_key === data.short_key);
             if (idx >= 0) Object.assign(State.links[idx], data);
             if (["dashboard", "links", "analytics"].includes(State.currentPage)) {
@@ -267,41 +260,37 @@ const RealtimeSync = {
             }
         },
         link_deleted(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             State.links = State.links.filter(l => l.short_key !== data.short_key);
             if (["dashboard", "links", "analytics"].includes(State.currentPage)) {
                 refreshActivePageData(true);
             }
         },
-        click_recorded() {
+        click_recorded(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             if (["dashboard", "analytics"].includes(State.currentPage)) {
                 refreshActivePageData(true);
             }
         },
         settings_updated(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             if (State.settings) Object.assign(State.settings, data);
-            // Update profile name in header if name fields changed
             if (data.first_name || data.last_name) {
                 const name = `${data.first_name || State.settings?.first_name || ""} ${data.last_name || State.settings?.last_name || ""}`.trim();
                 [$q("#dash-profile-name"), $q("#dash-user-name")].forEach(el => { if (el) el.textContent = name; });
             }
         },
-        notifications_updated() {
+        notifications_updated(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             fetchSidebarAndHeaderUpdates();
         },
-        campaign_created() {
-            if (State.currentPage === "campaigns") refreshActivePageData(true);
-        },
-        domain_added() {
+        domain_added(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             if (State.currentPage === "domains") refreshActivePageData(true);
         },
-        domain_deleted() {
+        domain_deleted(data) {
+            if (data.userId && State.auth?.user && data.userId !== State.auth.user.id) return;
             if (State.currentPage === "domains") refreshActivePageData(true);
-        },
-        apikey_created() {
-            if (State.currentPage === "settings") loadAPIKeysList();
-        },
-        apikey_deleted() {
-            if (State.currentPage === "settings") loadAPIKeysList();
         }
     },
 
@@ -586,18 +575,10 @@ async function refreshActivePageData(background = false) {
             // Reuses dashboard data for simplicity
             const data = await API.getDashboardStats(State.dateFilter);
             renderAnalyticsPage(container, data);
-        } else if (p === "campaigns") {
-            const camps = await API.getCampaigns();
-            State.campaigns = camps;
-            renderCampaignsPage(container, camps);
         } else if (p === "domains") {
             const domains = await API.getDomains();
             State.domains = domains;
             renderDomainsPage(container, domains);
-        } else if (p === "api") {
-            renderAPIPage(container);
-        } else if (p === "developers") {
-            renderDevelopersPage(container);
         } else if (p === "settings") {
             const settings = await API.getSettings();
             State.settings = settings;
@@ -608,10 +589,6 @@ async function refreshActivePageData(background = false) {
             renderProfilePage(container, settings);
         } else if (p === "help") {
             renderHelpPage(container);
-        } else if (p === "integrations") {
-            renderIntegrationsPage(container);
-        } else if (p === "teams") {
-            renderTeamsPage(container);
         }
     } catch (e) {
         container.innerHTML = `<div class="p-lg text-center text-error border border-error/20 bg-error/5 rounded-2xl">
@@ -701,7 +678,7 @@ function renderPublicLoginPage(container) {
             const res = await API.login(email, pass);
             State.auth = res.user;
             localStorage.setItem("alpurl-auth", JSON.stringify(res.user));
-            localStorage.setItem("alpurl-api-key", "alp_live_demo_key");
+            localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
             showToast("Logged in successfully!", "success");
             initSessionState();
             window.location.hash = "#/dashboard";
@@ -760,7 +737,7 @@ function renderPublicRegisterPage(container) {
             const res = await API.register(data);
             State.auth = res.user;
             localStorage.setItem("alpurl-auth", JSON.stringify(res.user));
-            localStorage.setItem("alpurl-api-key", "alp_live_demo_key");
+            localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
             showToast("Account created successfully!", "success");
             initSessionState();
             window.location.hash = "#/dashboard";
@@ -2241,8 +2218,8 @@ function renderTeamsPage(container) {
 // ════════════════════════════════════════════════════════════════════
 //  PAGE: SETTINGS (COMPREHENSIVELY COMPLETED)
 // ════════════════════════════════════════════════════════════════════
-const SETTINGS_TABS = ["general", "profile", "notifications", "security", "appearance", "apikeys", "workspace"];
-const SETTINGS_LABELS = { general: "General", profile: "Profile", notifications: "Notifications", security: "Security", appearance: "Appearance", apikeys: "API Keys", workspace: "Workspace" };
+const SETTINGS_TABS = ["general", "profile", "notifications", "security", "appearance"];
+const SETTINGS_LABELS = { general: "General", profile: "Profile", notifications: "Notifications", security: "Security", appearance: "Appearance" };
 
 function renderSettingsPage(container, settings) {
     container.innerHTML = `
@@ -2574,7 +2551,7 @@ function renderActiveSettingsTab(settings) {
             <div class="flex justify-between items-center">
                 <div>
                     <h5 class="text-xs font-bold text-on-surface">Workspace Owner</h5>
-                    <p class="text-[11px] text-on-surface-variant mt-0.5">Primary email: praval@alpurl.dev</p>
+                    <p class="text-[11px] text-on-surface-variant mt-0.5">Primary email: ${settings.email || "user@example.com"}</p>
                 </div>
                 <span class="badge badge-primary">Owner</span>
             </div>
@@ -2809,8 +2786,8 @@ $q("#login-form")?.addEventListener("submit", async e => {
         State.auth = res.user;
         localStorage.setItem("alpurl-auth", JSON.stringify(res.user));
         
-        // Save dummy token
-        localStorage.setItem("alpurl-api-key", "alp_live_demo_key");
+        // Save token
+        localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
         
         $q("#auth-modal").classList.add("hidden");
         showToast("Logged in successfully!", "success");
@@ -2834,7 +2811,7 @@ $q("#register-form")?.addEventListener("submit", async e => {
         const res = await API.register(data);
         State.auth = res.user;
         localStorage.setItem("alpurl-auth", JSON.stringify(res.user));
-        localStorage.setItem("alpurl-api-key", "alp_live_demo_key");
+        localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
         
         $q("#auth-modal").classList.add("hidden");
         showToast("Account created successfully!", "success");

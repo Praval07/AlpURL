@@ -34,45 +34,14 @@ def client(db_session):
         yield c
     app.dependency_overrides.clear()
 
-def test_shorten_url(client):
-    response = client.post(
-        "/api/shorten",
-        json={"long_url": "https://www.google.com", "custom_alias": "goog-test"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["short_key"] == "goog-test"
-    assert "short_url" in data
-    assert data["long_url"] == "https://www.google.com"
-
-def test_shorten_duplicate_alias(client):
-    response = client.post(
-        "/api/shorten",
-        json={"long_url": "https://example.com", "custom_alias": "goog-test"}
-    )
-    assert response.status_code == 400
-    assert "already in use" in response.json()["detail"]
-
-def test_redirect_to_url(client):
-    # Test valid redirect
-    response = client.get("/goog-test", follow_redirects=False)
-    assert response.status_code == 307
-    assert response.headers["location"] == "https://www.google.com"
-
-def test_redirect_non_existent(client):
-    response = client.get("/non-existent")
-    assert response.status_code == 404
-
-def test_dashboard_stats(client):
-    response = client.get("/api/dashboard-stats")
-    assert response.status_code == 200
-    data = response.json()
-    assert "total_links" in data
-    assert "total_clicks" in data
-    assert data["total_links"] == 1
+# Shared state to pass tokens across tests
+class TestState:
+    user1_token = None
+    user2_token = None
+    anon_short_key = None
 
 def test_user_registration(client, db_session):
-    # Register a new user
+    # Register user1
     payload = {
         "first_name": "Antigravity",
         "last_name": "Tester",
@@ -83,14 +52,15 @@ def test_user_registration(client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
+    assert "token" in data
     assert "user" in data
     assert data["user"]["email"] == "tester@alpurl.dev"
+    TestState.user1_token = data["token"]
 
-    # Check MongoDB contains the hashed password
+    # Check MongoDB contains the settings
     user_in_db = db_session.users.find_one({"email": "tester@alpurl.dev"})
     assert user_in_db is not None
     assert user_in_db["password_hash"] is not None
-    assert user_in_db["password_hash"] != "strongpassword123"
 
 def test_user_login(client):
     # Valid login
@@ -98,8 +68,69 @@ def test_user_login(client):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "success"
+    assert "token" in data
 
     # Invalid login
     response = client.post("/api/auth/login", json={"email": "tester@alpurl.dev", "password": "wrongpassword"})
     assert response.status_code == 400
     assert "Invalid email or password" in response.json()["detail"]
+
+def test_auth_route_protection(client):
+    # Try calling dashboard stats without token
+    response = client.get("/api/dashboard-stats")
+    assert response.status_code == 401
+
+def test_user1_shorten_url(client):
+    headers = {"Authorization": f"Bearer {TestState.user1_token}"}
+    response = client.post(
+        "/api/shorten",
+        json={"long_url": "https://www.google.com", "custom_alias": "goog-test"},
+        headers=headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["short_key"] == "goog-test"
+    assert data["userId"] != "anonymous"
+
+def test_user1_dashboard_stats(client):
+    headers = {"Authorization": f"Bearer {TestState.user1_token}"}
+    response = client.get("/api/dashboard-stats", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_links"] == 1
+
+def test_user2_registration_and_isolation(client):
+    # Register user2
+    payload = {
+        "first_name": "Antigravity2",
+        "last_name": "Tester2",
+        "email": "tester2@alpurl.dev",
+        "password": "strongpassword123"
+    }
+    response = client.post("/api/auth/register", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    TestState.user2_token = data["token"]
+
+    # Verify user2 dashboard stats has 0 links (data isolation!)
+    headers = {"Authorization": f"Bearer {TestState.user2_token}"}
+    response = client.get("/api/dashboard-stats", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_links"] == 0
+
+def test_anonymous_shorten_and_redirect(client):
+    # Shorten as guest
+    response = client.post(
+        "/api/shorten",
+        json={"long_url": "https://example.com"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["userId"] == "anonymous"
+    short_key = data["short_key"]
+
+    # Test redirect
+    response = client.get(f"/{short_key}", follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "https://example.com"

@@ -119,6 +119,7 @@ class User(BaseModel):
 
 class Link(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
+    userId: Optional[str] = Field(None, alias="userId")
     short_key: str
     long_url: str
     custom_alias: Optional[str] = None
@@ -132,6 +133,7 @@ class Link(BaseModel):
 
 class QRCode(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
+    userId: Optional[str] = Field(None, alias="userId")
     name: str
     short_key: str
     url: str
@@ -142,6 +144,7 @@ class QRCode(BaseModel):
 
 class Analytics(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
+    userId: Optional[str] = Field(None, alias="userId")
     short_key: str
     ip_address: str = "127.0.0.1"
     user_agent: Optional[str] = None
@@ -152,15 +155,9 @@ class Analytics(BaseModel):
     country: Optional[str] = "Unknown"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-class Campaign(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    name: str
-    status: str = "active"
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-
 class Domain(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
+    userId: Optional[str] = Field(None, alias="userId")
     domain: str
     status: str = "pending"
     ssl_enabled: bool = True
@@ -168,6 +165,7 @@ class Domain(BaseModel):
 
 class Notification(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
+    userId: Optional[str] = Field(None, alias="userId")
     type: str
     icon: str
     title: str
@@ -178,18 +176,19 @@ class Notification(BaseModel):
 
 class Settings(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
-    workspace_name: str = "Praval's Workspace"
+    userId: Optional[str] = Field(None, alias="userId")
+    workspace_name: str = "My Workspace"
     default_domain: str = "alp.url"
     timezone: str = "Asia/Kolkata (IST)"
     language: str = "English (US)"
     date_format: str = "YYYY-MM-DD"
     
     # Profile info
-    first_name: str = "Praval"
-    last_name: str = "Sharma"
-    username: str = "praval07"
-    email: str = "praval@alpurl.dev"
-    bio: Optional[str] = "Software Engineer & SaaS builder"
+    first_name: str = "User"
+    last_name: str = ""
+    username: str = "user"
+    email: str = "user@example.com"
+    bio: Optional[str] = "New user on AlpURL"
     avatar_url: Optional[str] = "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"
     
     # Notifications switches
@@ -206,37 +205,8 @@ class Settings(BaseModel):
     font_size: str = "medium"
     compact_mode: bool = False
 
-class APIKey(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    key_val: str
-    name: str = "Default Key"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    status: str = "active"
-
-class Workspace(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    name: str
-    owner_id: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class Team(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    name: str
-    members: List[str] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-class AuditLog(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    action: str
-    user: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    details: Dict[str, Any] = {}
-
-# ═══════════════════════════════════════════════════════════════
-#  DATABASE INITIALIZER & SEEDER
-# ═══════════════════════════════════════════════════════════════
 def init_db():
-    """Establishes connection, sets indexes, and seeds database if empty."""
+    """Establishes connection and sets indexes."""
     db_manager.connect()
     db = db_manager.get_db()
     
@@ -245,166 +215,11 @@ def init_db():
         db.links.create_index("short_key", unique=True)
         db.links.create_index("created_at")
         db.analytics.create_index([("short_key", 1), ("timestamp", -1)])
-        db.campaigns.create_index("name", unique=True)
         db.domains.create_index("domain", unique=True)
-        db.apiKeys.create_index("key_val", unique=True)
         db.users.create_index("email", unique=True)
         print("[MongoDB] Database indexes verified.")
     except Exception as e:
         print(f"[MongoDB Index Warning] Failed to verify or create indexes: {e}")
-
-    # Seed Database if links collection is empty
-    if db.links.count_documents({}) == 0:
-        print("[MongoDB Seeder] Pre-populating AlpURL with telemetry data...")
-        from datetime import timedelta
-        import random
-        
-        mappings_data = [
-            ("google", "https://www.google.com/search?q=alpurl", "google", True, "Google Search Promo", "alp.url", 30),
-            ("github", "https://github.com/Praval07/AlpURL", "github", False, "GitHub Open Source", "alp.url", 25),
-            ("stripe", "https://stripe.com/docs/api", "stripe", True, "Stripe API Integration Docs", "alp.url", 20),
-            ("vercel", "https://vercel.com/dashboard", "vercel", False, "Vercel Hosting Deployments", "alp.url", 15),
-            ("tailwind", "https://tailwindcss.com/docs/v4", "tailwind", True, "Tailwind CSS Layout Guidelines", "alp.url", 10),
-            ("fastapi", "https://fastapi.tiangolo.com/advanced", "fastapi", False, "FastAPI High Performance Specs", "alp.url", 5),
-        ]
-        
-        seeded_links = []
-        for short_key, long_url, alias, qr, campaign, domain, days_ago in mappings_data:
-            created_at = datetime.utcnow() - timedelta(days=days_ago)
-            expiry_date = datetime.utcnow() + timedelta(days=365 * 2)
-            
-            link_doc = {
-                "_id": short_key,
-                "short_key": short_key,
-                "long_url": long_url,
-                "custom_alias": alias,
-                "created_at": created_at,
-                "expiry_date": expiry_date,
-                "qr_code_enabled": qr,
-                "campaign": campaign,
-                "domain": domain,
-                "status": "active",
-                "is_deleted": False
-            }
-            db.links.insert_one(link_doc)
-            seeded_links.append(link_doc)
-            
-            # If QR code enabled, seed qrCodes collection
-            if qr:
-                db.qrCodes.insert_one({
-                    "_id": f"qr-{short_key}",
-                    "name": alias or short_key,
-                    "short_key": short_key,
-                    "url": f"https://{domain}/{short_key}",
-                    "short_url": short_key,
-                    "clicks": 0,
-                    "created_at": created_at,
-                    "status": "active"
-                })
-        
-        browsers = ["Chrome", "Firefox", "Safari", "Edge", "Opera"]
-        oss = ["Windows 11", "macOS Sonoma", "iOS 17", "Android 14", "Linux Ubuntu"]
-        devices = ["Desktop", "Mobile", "Tablet"]
-        referrers = ["Direct", "https://github.com", "https://t.co", "https://news.ycombinator.com", "https://google.com"]
-        countries = ["United States", "Germany", "United Kingdom", "India", "France", "Canada", "Australia", "Japan"]
-        
-        analytics_docs = []
-        for _ in range(350):
-            m = random.choice(seeded_links)
-            max_days = (datetime.utcnow() - m["created_at"]).days
-            random_days = random.randint(0, max_days) if max_days > 0 else 0
-            random_hours = random.randint(0, 23)
-            random_minutes = random.randint(0, 59)
-            timestamp = m["created_at"] + timedelta(days=random_days, hours=random_hours, minutes=random_minutes)
-            
-            browser = random.choice(browsers)
-            os_name = random.choice(oss)
-            device = "Mobile" if "iOS" in os_name or "Android" in os_name else random.choice(devices)
-            referrer = random.choice(referrers)
-            country = random.choice(countries)
-            ip = f"192.168.1.{random.randint(10, 250)}"
-            
-            analytics_docs.append({
-                "short_key": m["short_key"],
-                "ip_address": ip,
-                "user_agent": f"Mozilla/5.0 (Mock {browser}; {os_name})",
-                "browser": browser,
-                "os": os_name,
-                "device": device,
-                "referrer": referrer,
-                "country": country,
-                "timestamp": timestamp
-            })
-            
-        if analytics_docs:
-            db.analytics.insert_many(analytics_docs)
-            print(f"[MongoDB Seeder] Seeded 6 links and {len(analytics_docs)} analytics records.")
-
-    # Seed Campaigns
-    if db.campaigns.count_documents({}) == 0:
-        db.campaigns.insert_many([
-            {"name": "Summer Sale 2026", "status": "active", "start_date": "2026-06-15", "end_date": "2026-08-31"},
-            {"name": "Product Hunt Launch", "status": "active", "start_date": "2026-06-05", "end_date": "2026-06-15"},
-            {"name": "Developer Outreach", "status": "active", "start_date": "2026-06-01", "end_date": "2026-07-31"},
-            {"name": "Beta Launch V3", "status": "paused", "start_date": "2026-06-25", "end_date": "2026-09-30"}
-        ])
-        print("[MongoDB Seeder] Seeded campaigns.")
-
-    # Seed Domains
-    if db.domains.count_documents({}) == 0:
-        db.domains.insert_many([
-            {"domain": "alp.url", "status": "verified", "ssl_enabled": True, "created_at": datetime.utcnow()},
-            {"domain": "go.alpurl.dev", "status": "verified", "ssl_enabled": True, "created_at": datetime.utcnow()},
-            {"domain": "lnk.alpurl.io", "status": "pending", "ssl_enabled": True, "created_at": datetime.utcnow()}
-        ])
-        print("[MongoDB Seeder] Seeded domains.")
-
-    # Seed API Keys
-    if db.apiKeys.count_documents({}) == 0:
-        db.apiKeys.insert_one({
-            "key_val": "alp_live_8f3c2a9d4b6e8f1a",
-            "name": "Production API Key",
-            "created_at": datetime.utcnow(),
-            "status": "active"
-        })
-        print("[MongoDB Seeder] Seeded API key.")
-
-    # Seed Notifications
-    if db.notifications.count_documents({}) == 0:
-        db.notifications.insert_many([
-            {"type": "milestone", "icon": "local_fire_department", "title": "Milestone Reached 🔥", "body": "Your link 'summer' just surpassed 12,000 clicks!", "time_label": "2 min ago", "read": False, "created_at": datetime.utcnow()},
-            {"type": "insight", "icon": "psychology", "title": "AI Insight", "body": "Twitter referral traffic up 45% this week — viral link detected.", "time_label": "18 min ago", "read": False, "created_at": datetime.utcnow()},
-            {"type": "success", "icon": "verified", "title": "Domain Verified", "body": "go.alpurl.dev is now active and serving redirects.", "time_label": "1 hr ago", "read": False, "created_at": datetime.utcnow()},
-            {"type": "info", "icon": "analytics", "title": "Weekly Digest Ready", "body": "Your analytics report for June 25 – July 1 is available.", "time_label": "3 hrs ago", "read": True, "created_at": datetime.utcnow()}
-        ])
-        print("[MongoDB Seeder] Seeded notifications.")
-
-    # Seed User Settings
-    if db.settings.count_documents({}) == 0:
-        db.settings.insert_one({
-            "workspace_name": "Praval's Workspace",
-            "default_domain": "alp.url",
-            "timezone": "Asia/Kolkata (IST)",
-            "language": "English (US)",
-            "date_format": "YYYY-MM-DD",
-            "first_name": "Praval",
-            "last_name": "Sharma",
-            "username": "praval07",
-            "email": "praval@alpurl.dev",
-            "bio": "Software Engineer & SaaS builder",
-            "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg",
-            "notif_milestones": True,
-            "notif_insights": True,
-            "notif_domains": True,
-            "notif_digest": True,
-            "notif_security": True,
-            "notif_updates": False,
-            "theme": "dark",
-            "accent_color": "blue",
-            "font_size": "medium",
-            "compact_mode": False
-        })
-        print("[MongoDB Seeder] Seeded default settings.")
 
 def get_db():
     """FastAPI Dependency injection generator yielding MongoDB database."""

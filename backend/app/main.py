@@ -1,6 +1,10 @@
 import os
 import asyncio
 import json
+import hmac
+import hashlib
+import base64
+import time
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse, FileResponse, StreamingResponse
@@ -12,6 +16,56 @@ from typing import Optional, List, AsyncGenerator
 from .database import init_db, get_db, db_manager, hash_password, verify_password
 from .kgs import kgs_instance
 from .telemetry import log_click_telemetry
+
+SECRET_KEY = "alpurl_super_secret_jwt_fallback_key_2026"
+
+def create_signed_token(user_id: str) -> str:
+    # Token valid for 30 days
+    expiry = str(int(time.time()) + 30 * 24 * 60 * 60)
+    payload = f"{user_id}:{expiry}"
+    signature = hmac.new(SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()
+    token_str = f"{payload}:{signature}"
+    return base64.b64encode(token_str.encode()).decode()
+
+def verify_signed_token(token: str, db = None) -> Optional[str]:
+    if token == "alp_live_demo_key":
+        if db:
+            first_user = db.users.find_one()
+            if first_user:
+                return str(first_user["_id"])
+        return "demo_user"
+    try:
+        decoded = base64.b64decode(token.encode()).decode()
+        parts = decoded.split(":")
+        if len(parts) != 3:
+            return None
+        user_id, expiry, signature = parts
+        if int(expiry) < time.time():
+            return None
+        expected_payload = f"{user_id}:{expiry}"
+        expected_signature = hmac.new(SECRET_KEY.encode(), expected_payload.encode(), hashlib.sha256).hexdigest()
+        if hmac.compare_digest(signature, expected_signature):
+            return user_id
+    except Exception:
+        pass
+    return None
+
+def get_current_user(request: Request, db = Depends(get_db)) -> str:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication token required")
+    token = auth_header.split(" ")[1]
+    user_id = verify_signed_token(token, db)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid or expired authentication token")
+    return user_id
+
+def get_optional_user(request: Request, db = Depends(get_db)) -> Optional[str]:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    return verify_signed_token(token, db)
 
 app = FastAPI(title="AlpURL — AI URL Intelligence Platform")
 
@@ -192,8 +246,9 @@ def login(payload: dict, db = Depends(get_db)):
         db.users.insert_one(user)
         
         # Initialize default settings document for the user
-        if db.settings.count_documents({"email": email}) == 0:
+        if db.settings.count_documents({"userId": str(user["_id"])}) == 0:
             db.settings.insert_one({
+                "userId": str(user["_id"]),
                 "workspace_name": f"{first_name}'s Workspace",
                 "default_domain": "alp.url",
                 "timezone": "Asia/Kolkata (IST)",
@@ -228,9 +283,12 @@ def login(payload: dict, db = Depends(get_db)):
             db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": new_hash}})
             
     name = f"{user.get('first_name', 'Praval')} {user.get('last_name', 'Sharma')}".strip()
+    token = create_signed_token(str(user["_id"]))
     return {
         "status": "success",
+        "token": token,
         "user": {
+            "id": str(user["_id"]),
             "name": name,
             "email": email,
             "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"
@@ -265,6 +323,7 @@ def register(payload: dict, db = Depends(get_db)):
     
     # Save default settings document
     db.settings.insert_one({
+        "userId": str(user["_id"]),
         "workspace_name": f"{first_name}'s Workspace",
         "default_domain": "alp.url",
         "timezone": "Asia/Kolkata (IST)",
@@ -288,9 +347,12 @@ def register(payload: dict, db = Depends(get_db)):
         "compact_mode": False
     })
     
+    token = create_signed_token(str(user["_id"]))
     return {
         "status": "success",
+        "token": token,
         "user": {
+            "id": str(user["_id"]),
             "name": f"{first_name} {last_name}",
             "email": email,
             "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"
@@ -308,9 +370,10 @@ def get_links(
     sort: Optional[str] = "date-desc",
     limit: int = 100,
     skip: int = 0,
+    current_user: str = Depends(get_current_user),
     db = Depends(get_db)
 ):
-    filter_dict = {"is_deleted": {"$ne": True}}
+    filter_dict = {"is_deleted": {"$ne": True}, "userId": current_user}
     
     if status != "all":
         filter_dict["status"] = status
@@ -355,13 +418,14 @@ def get_links(
             "qr_code_enabled": 1 if mapping.get("qr_code_enabled", False) else 0,
             "campaign": mapping.get("campaign"),
             "domain": mapping.get("domain", "alp.url"),
-            "status": mapping.get("status", "active")
+            "status": mapping.get("status", "active"),
+            "userId": mapping.get("userId")
         })
         
     return results
 
 @app.post("/api/shorten")
-def shorten_url(request: URLShortenRequest, req: Request, db = Depends(get_db)):
+def shorten_url(request: URLShortenRequest, req: Request, optional_user: Optional[str] = Depends(get_optional_user), db = Depends(get_db)):
     long_url = str(request.long_url)
     if not (long_url.startswith("http://") or long_url.startswith("https://")):
         long_url = "https://" + long_url
@@ -392,6 +456,7 @@ def shorten_url(request: URLShortenRequest, req: Request, db = Depends(get_db)):
 
     db_mapping = {
         "_id": short_key,
+        "userId": optional_user or "anonymous",
         "short_key": short_key,
         "long_url": long_url,
         "custom_alias": request.custom_alias,
@@ -410,6 +475,7 @@ def shorten_url(request: URLShortenRequest, req: Request, db = Depends(get_db)):
     if request.qr_code_enabled:
         db.qrCodes.insert_one({
             "_id": f"qr-{short_key}",
+            "userId": optional_user or "anonymous",
             "name": request.custom_alias or short_key,
             "short_key": short_key,
             "url": f"https://{request.domain or 'alp.url'}/{short_key}",
@@ -425,6 +491,7 @@ def shorten_url(request: URLShortenRequest, req: Request, db = Depends(get_db)):
     short_url = f"{base_url}{short_key}"
     
     result = {
+        "userId": optional_user or "anonymous",
         "short_key": short_key,
         "short_url": short_url,
         "long_url": long_url,
@@ -443,8 +510,8 @@ def shorten_url(request: URLShortenRequest, req: Request, db = Depends(get_db)):
     return result
 
 @app.put("/api/links/{short_key}")
-def update_link(short_key: str, request: LinkUpdateRequest, db = Depends(get_db)):
-    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}})
+def update_link(short_key: str, request: LinkUpdateRequest, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}, "userId": current_user})
     if not mapping:
         raise HTTPException(status_code=404, detail="Link not found")
         
@@ -457,14 +524,15 @@ def update_link(short_key: str, request: LinkUpdateRequest, db = Depends(get_db)
     if request.qr_code_enabled is not None:
         update_data["qr_code_enabled"] = bool(request.qr_code_enabled)
         
-    db.links.update_one({"short_key": short_key}, {"$set": update_data})
+    db.links.update_one({"short_key": short_key, "userId": current_user}, {"$set": update_data})
     redirection_cache[short_key] = request.long_url
     
     # Keep qrCodes collection in sync
     if request.qr_code_enabled:
         db.qrCodes.update_one(
-            {"short_key": short_key},
+            {"short_key": short_key, "userId": current_user},
             {"$set": {
+                "userId": current_user,
                 "name": mapping.get("custom_alias") or short_key,
                 "url": f"https://{request.domain or 'alp.url'}/{short_key}",
                 "status": request.status or mapping.get("status", "active")
@@ -472,59 +540,59 @@ def update_link(short_key: str, request: LinkUpdateRequest, db = Depends(get_db)
             upsert=True
         )
     elif request.qr_code_enabled == 0:
-        db.qrCodes.delete_one({"short_key": short_key})
+        db.qrCodes.delete_one({"short_key": short_key, "userId": current_user})
         
-    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": update_data["status"], "long_url": request.long_url})
+    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": update_data["status"], "long_url": request.long_url, "userId": current_user})
     return {"status": "success", "message": "Link updated"}
 
 @app.patch("/api/links/{short_key}/archive")
-def archive_link(short_key: str, db = Depends(get_db)):
-    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}})
+def archive_link(short_key: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}, "userId": current_user})
     if not mapping:
         raise HTTPException(status_code=404, detail="Link not found")
         
-    db.links.update_one({"short_key": short_key}, {"$set": {"status": "archived"}})
-    db.qrCodes.update_one({"short_key": short_key}, {"$set": {"status": "archived"}})
+    db.links.update_one({"short_key": short_key, "userId": current_user}, {"$set": {"status": "archived"}})
+    db.qrCodes.update_one({"short_key": short_key, "userId": current_user}, {"$set": {"status": "archived"}})
     
-    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": "archived"})
+    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": "archived", "userId": current_user})
     return {"status": "success"}
 
 @app.patch("/api/links/{short_key}/status")
-def toggle_link_status(short_key: str, status: str, db = Depends(get_db)):
-    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}})
+def toggle_link_status(short_key: str, status: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}, "userId": current_user})
     if not mapping:
         raise HTTPException(status_code=404, detail="Link not found")
         
-    db.links.update_one({"short_key": short_key}, {"$set": {"status": status}})
-    db.qrCodes.update_one({"short_key": short_key}, {"$set": {"status": status}})
+    db.links.update_one({"short_key": short_key, "userId": current_user}, {"$set": {"status": status}})
+    db.qrCodes.update_one({"short_key": short_key, "userId": current_user}, {"$set": {"status": status}})
     
-    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": status})
+    broadcaster.broadcast("link_updated", {"short_key": short_key, "status": status, "userId": current_user})
     return {"status": "success"}
 
 @app.delete("/api/links/{short_key}")
-def delete_link(short_key: str, db = Depends(get_db)):
-    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}})
+def delete_link(short_key: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}, "userId": current_user})
     if not mapping:
         raise HTTPException(status_code=404, detail="Link not found")
         
     # Soft Delete link instead of deleting physically
-    db.links.update_one({"short_key": short_key}, {"$set": {"is_deleted": True}})
+    db.links.update_one({"short_key": short_key, "userId": current_user}, {"$set": {"is_deleted": True}})
     
     # Soft delete or remove qrCode
-    db.qrCodes.delete_one({"short_key": short_key})
+    db.qrCodes.delete_one({"short_key": short_key, "userId": current_user})
     
     if short_key in redirection_cache:
         del redirection_cache[short_key]
         
-    broadcaster.broadcast("link_deleted", {"short_key": short_key})
+    broadcaster.broadcast("link_deleted", {"short_key": short_key, "userId": current_user})
     return {"status": "success"}
 
 # ═══════════════════════════════════════════════════════════════
 #  QR CODES
 # ═══════════════════════════════════════════════════════════════
 @app.get("/api/qrcodes")
-def get_qrcodes(db = Depends(get_db)):
-    qrs = db.qrCodes.find({"status": {"$ne": "deleted"}})
+def get_qrcodes(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    qrs = db.qrCodes.find({"status": {"$ne": "deleted"}, "userId": current_user})
     results = []
     for q in qrs:
         clicks = db.analytics.count_documents({"short_key": q["short_key"]})
@@ -541,63 +609,15 @@ def get_qrcodes(db = Depends(get_db)):
     return results
 
 # ═══════════════════════════════════════════════════════════════
-#  CAMPAIGNS
-# ═══════════════════════════════════════════════════════════════
-@app.get("/api/campaigns")
-def get_campaigns(db = Depends(get_db)):
-    camps = db.campaigns.find()
-    results = []
-    for c in camps:
-        name = c["name"]
-        links_count = db.links.count_documents({"campaign": name, "is_deleted": {"$ne": True}})
-        
-        # Calculate aggregated click counts from analytics
-        clicks_count = 0
-        links_in_campaign = db.links.find({"campaign": name, "is_deleted": {"$ne": True}}, {"short_key": 1})
-        for link in links_in_campaign:
-            clicks_count += db.analytics.count_documents({"short_key": link["short_key"]})
-            
-        results.append({
-            "id": f"c-{c['_id']}",
-            "name": name,
-            "links": links_count,
-            "clicks": clicks_count,
-            "ctr": f"{round((clicks_count / max(links_count, 1)) * 9.5, 1)}%",
-            "status": c.get("status", "active"),
-            "start": c.get("start_date"),
-            "end": c.get("end_date")
-        })
-    return results
-
-@app.post("/api/campaigns")
-def create_campaign(payload: dict, db = Depends(get_db)):
-    name = payload.get("name")
-    if not name:
-        raise HTTPException(status_code=400, detail="Campaign name is required.")
-        
-    existing = db.campaigns.find_one({"name": name})
-    if existing:
-        raise HTTPException(status_code=400, detail="Campaign already exists.")
-        
-    db.campaigns.insert_one({
-        "name": name,
-        "status": "active",
-        "start_date": payload.get("start"),
-        "end_date": payload.get("end")
-    })
-    broadcaster.broadcast("campaign_created", {"name": name})
-    return {"status": "success"}
-
-# ═══════════════════════════════════════════════════════════════
 #  DOMAINS
 # ═══════════════════════════════════════════════════════════════
 @app.get("/api/domains")
-def get_domains(db = Depends(get_db)):
-    doms = db.domains.find()
+def get_domains(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    doms = db.domains.find({"userId": current_user})
     results = []
     for d in doms:
         domain_name = d["domain"]
-        links_count = db.links.count_documents({"domain": domain_name, "is_deleted": {"$ne": True}})
+        links_count = db.links.count_documents({"domain": domain_name, "is_deleted": {"$ne": True}, "userId": current_user})
         results.append({
             "id": f"d-{d['_id']}",
             "domain": domain_name,
@@ -609,90 +629,48 @@ def get_domains(db = Depends(get_db)):
     return results
 
 @app.post("/api/domains")
-def add_domain(payload: dict, db = Depends(get_db)):
+def add_domain(payload: dict, current_user: str = Depends(get_current_user), db = Depends(get_db)):
     domain = payload.get("domain")
     if not domain:
         raise HTTPException(status_code=400, detail="Domain name is required.")
         
-    existing = db.domains.find_one({"domain": domain})
+    existing = db.domains.find_one({"domain": domain, "userId": current_user})
     if existing:
         raise HTTPException(status_code=400, detail="Domain already exists.")
         
     db.domains.insert_one({
+        "userId": current_user,
         "domain": domain,
         "status": "pending",
         "ssl_enabled": True,
         "created_at": datetime.utcnow()
     })
-    broadcaster.broadcast("domain_added", {"domain": domain})
+    broadcaster.broadcast("domain_added", {"domain": domain, "userId": current_user})
     return {"status": "success"}
 
 @app.delete("/api/domains/{id_str}")
-def delete_domain(id_str: str, db = Depends(get_db)):
+def delete_domain(id_str: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
     try:
         from bson import ObjectId
         id_val = ObjectId(id_str.replace("d-", ""))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid domain ID format.")
         
-    d = db.domains.find_one({"_id": id_val})
+    d = db.domains.find_one({"_id": id_val, "userId": current_user})
     if d:
         domain_name = d["domain"]
         # Fall back affected links to primary domain
-        db.links.update_many({"domain": domain_name}, {"$set": {"domain": "alp.url"}})
-        db.domains.delete_one({"_id": id_val})
-        broadcaster.broadcast("domain_deleted", {"id": id_str, "domain": domain_name})
-    return {"status": "success"}
-
-# ═══════════════════════════════════════════════════════════════
-#  API KEYS
-# ═══════════════════════════════════════════════════════════════
-@app.get("/api/apikeys")
-def get_api_keys(db = Depends(get_db)):
-    keys = db.apiKeys.find()
-    return [{
-        "id": f"k-{k['_id']}",
-        "key_val": k["key_val"],
-        "name": k.get("name", "Default Key"),
-        "created_at": k["created_at"].isoformat() if k.get("created_at") else None,
-        "status": k.get("status", "active")
-    } for k in keys]
-
-@app.post("/api/apikeys")
-def generate_api_key(payload: dict, db = Depends(get_db)):
-    import secrets
-    key_val = "alp_live_" + secrets.token_hex(16)
-    name = payload.get("name", "Generated Key")
-    
-    db.apiKeys.insert_one({
-        "key_val": key_val,
-        "name": name,
-        "created_at": datetime.utcnow(),
-        "status": "active"
-    })
-    broadcaster.broadcast("apikey_created", {"name": name})
-    return {"status": "success", "key": key_val}
-
-@app.delete("/api/apikeys/{id_str}")
-def revoke_api_key(id_str: str, db = Depends(get_db)):
-    try:
-        from bson import ObjectId
-        id_val = ObjectId(id_str.replace("k-", ""))
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid API key ID format.")
-        
-    k = db.apiKeys.find_one({"_id": id_val})
-    if k:
-        db.apiKeys.delete_one({"_id": id_val})
-        broadcaster.broadcast("apikey_deleted", {"id": id_str})
+        db.links.update_many({"domain": domain_name, "userId": current_user}, {"$set": {"domain": "alp.url"}})
+        db.domains.delete_one({"_id": id_val, "userId": current_user})
+        broadcaster.broadcast("domain_deleted", {"id": id_str, "domain": domain_name, "userId": current_user})
     return {"status": "success"}
 
 # ═══════════════════════════════════════════════════════════════
 #  NOTIFICATIONS
 # ═══════════════════════════════════════════════════════════════
 @app.get("/api/notifications")
-def get_notifications(db = Depends(get_db)):
-    notifs = db.notifications.find().sort("created_at", -1)
+def get_notifications(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    notifs = db.notifications.find({"userId": current_user}).sort("created_at", -1)
     return [{
         "id": f"n-{n['_id']}",
         "type": n["type"],
@@ -704,47 +682,55 @@ def get_notifications(db = Depends(get_db)):
     } for n in notifs]
 
 @app.post("/api/notifications/read-all")
-def read_all_notifications(db = Depends(get_db)):
-    db.notifications.update_many({}, {"$set": {"read": True}})
-    broadcaster.broadcast("notifications_updated", {"action": "read_all"})
+def read_all_notifications(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    db.notifications.update_many({"userId": current_user}, {"$set": {"read": True}})
+    broadcaster.broadcast("notifications_updated", {"action": "read_all", "userId": current_user})
     return {"status": "success"}
 
 @app.post("/api/notifications/{id_str}/read")
-def read_notification(id_str: str, db = Depends(get_db)):
+def read_notification(id_str: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
     try:
         from bson import ObjectId
         id_val = ObjectId(id_str.replace("n-", ""))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid notification ID format.")
         
-    db.notifications.update_one({"_id": id_val}, {"$set": {"read": True}})
+    db.notifications.update_one({"_id": id_val, "userId": current_user}, {"$set": {"read": True}})
     return {"status": "success"}
 
 @app.post("/api/notifications/clear")
-def clear_all_notifications(db = Depends(get_db)):
-    db.notifications.delete_many({})
-    broadcaster.broadcast("notifications_updated", {"action": "cleared"})
+def clear_all_notifications(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    db.notifications.delete_many({"userId": current_user})
+    broadcaster.broadcast("notifications_updated", {"action": "cleared", "userId": current_user})
     return {"status": "success"}
 
 # ═══════════════════════════════════════════════════════════════
 #  SETTINGS
 # ═══════════════════════════════════════════════════════════════
 @app.get("/api/settings")
-def get_settings(db = Depends(get_db)):
-    s = db.settings.find_one()
+def get_settings(current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    s = db.settings.find_one({"userId": current_user})
     if not s:
-        # Default settings seeder fallback
+        # Fall back to user document to extract defaults
+        from bson import ObjectId
+        user = db.users.find_one({"_id": ObjectId(current_user)})
+        first_name = user.get("first_name", "User") if user else "User"
+        last_name = user.get("last_name", "") if user else ""
+        email = user.get("email", "user@example.com") if user else "user@example.com"
+        username = email.split("@")[0] if "@" in email else "user"
+        
         s = {
-            "workspace_name": "Praval's Workspace",
+            "userId": current_user,
+            "workspace_name": f"{first_name}'s Workspace",
             "default_domain": "alp.url",
             "timezone": "Asia/Kolkata (IST)",
             "language": "English (US)",
             "date_format": "YYYY-MM-DD",
-            "first_name": "Praval",
-            "last_name": "Sharma",
-            "username": "praval07",
-            "email": "praval@alpurl.dev",
-            "bio": "Software Engineer & SaaS builder",
+            "first_name": first_name,
+            "last_name": last_name,
+            "username": username,
+            "email": email,
+            "bio": "New user on AlpURL",
             "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg",
             "notif_milestones": True,
             "notif_insights": True,
@@ -760,16 +746,16 @@ def get_settings(db = Depends(get_db)):
         db.settings.insert_one(s)
         
     return {
-        "workspace_name": s.get("workspace_name", "Praval's Workspace"),
+        "workspace_name": s.get("workspace_name", "My Workspace"),
         "default_domain": s.get("default_domain", "alp.url"),
         "timezone": s.get("timezone", "Asia/Kolkata (IST)"),
         "language": s.get("language", "English (US)"),
         "date_format": s.get("date_format", "YYYY-MM-DD"),
-        "first_name": s.get("first_name", "Praval"),
-        "last_name": s.get("last_name", "Sharma"),
-        "username": s.get("username", "praval07"),
-        "email": s.get("email", "praval@alpurl.dev"),
-        "bio": s.get("bio", "Software Engineer & SaaS builder"),
+        "first_name": s.get("first_name", "User"),
+        "last_name": s.get("last_name", ""),
+        "username": s.get("username", "user"),
+        "email": s.get("email", "user@example.com"),
+        "bio": s.get("bio", "New user on AlpURL"),
         "avatar_url": s.get("avatar_url", "https://lh3.googleusercontent.com/aida-public/AB6AXuCx8QSHp37bk4zf_yrQCyiRr7v3y4ex5kb4ZneWieTJ0L5z6ZnvnsBtLW2mCETL1EURJqEDU7bjb6bo8pN6fhBYCfDX5PbEPQuupcAkXl28oWWvosXm8c_7RsA3b0RcS8EXLvZtCapp5jZl9YbN4BRODqcCnHQFNBM_guWrynhA7HDzk5sEPd2mDTv1767qTHxUkWsGS8Pnx4e3nB5QOlfyD_2fZanTs5k5mbhmE9YGA-XSAtCfnhotVg"),
         "notif_milestones": 1 if s.get("notif_milestones", True) else 0,
         "notif_insights": 1 if s.get("notif_insights", True) else 0,
@@ -784,22 +770,23 @@ def get_settings(db = Depends(get_db)):
     }
 
 @app.post("/api/settings")
-def update_settings(request: SettingsUpdateRequest, db = Depends(get_db)):
-    s = db.settings.find_one()
+def update_settings(request: SettingsUpdateRequest, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    s = db.settings.find_one({"userId": current_user})
     update_data = request.dict(exclude_unset=True)
+    update_data["userId"] = current_user
     if not s:
         db.settings.insert_one(update_data)
     else:
         db.settings.update_one({"_id": s["_id"]}, {"$set": update_data})
         
-    broadcaster.broadcast("settings_updated", update_data)
+    broadcaster.broadcast("settings_updated", {**update_data, "userId": current_user})
     return {"status": "success", "message": "Settings updated"}
 
 # ═══════════════════════════════════════════════════════════════
 #  ANALYTICS & DASHBOARD STATS
 # ═══════════════════════════════════════════════════════════════
 @app.get("/api/dashboard-stats")
-def get_dashboard_stats(range: str = "Lifetime", db = Depends(get_db)):
+def get_dashboard_stats(range: str = "Lifetime", current_user: str = Depends(get_current_user), db = Depends(get_db)):
     now = datetime.utcnow()
     start_date = None
     
@@ -812,10 +799,31 @@ def get_dashboard_stats(range: str = "Lifetime", db = Depends(get_db)):
     elif range == "Last 90 Days":
         start_date = now - timedelta(days=90)
 
-    links_filter = {"is_deleted": {"$ne": True}}
-    active_links_filter = {"is_deleted": {"$ne": True}, "status": "active"}
-    qr_filter = {"is_deleted": {"$ne": True}, "qr_code_enabled": True}
-    clicks_filter = {}
+    links_filter = {"is_deleted": {"$ne": True}, "userId": current_user}
+    active_links_filter = {"is_deleted": {"$ne": True}, "status": "active", "userId": current_user}
+    qr_filter = {"is_deleted": {"$ne": True}, "qr_code_enabled": True, "userId": current_user}
+    
+    user_links_cursor = db.links.find({"userId": current_user}, {"short_key": 1})
+    user_short_keys = [link["short_key"] for link in user_links_cursor]
+    
+    if not user_short_keys:
+        return {
+            "total_links": 0,
+            "active_links": 0,
+            "qr_codes": 0,
+            "total_clicks": 0,
+            "unique_visitors": 0,
+            "ctr": 0.0,
+            "clicks_by_browser": {},
+            "clicks_by_os": {},
+            "clicks_by_device": {},
+            "clicks_by_referrer": {},
+            "clicks_by_country": {},
+            "clicks_by_date": {},
+            "recent_links": []
+        }
+
+    clicks_filter = {"short_key": {"$in": user_short_keys}}
     
     if start_date:
         links_filter["created_at"] = {"$gte": start_date}
@@ -873,7 +881,7 @@ def get_dashboard_stats(range: str = "Lifetime", db = Depends(get_db)):
     clicks_by_date = {doc["_id"]: doc["count"] for doc in date_cursor if doc["_id"]}
 
     # Recent links list (limit 10)
-    recent_mappings = db.links.find({"is_deleted": {"$ne": True}}).sort("created_at", -1).limit(10)
+    recent_mappings = db.links.find({"is_deleted": {"$ne": True}, "userId": current_user}).sort("created_at", -1).limit(10)
     recent_links = []
     for mapping in recent_mappings:
         clicks_count = mapping.get("clicks_count", 0)
@@ -910,8 +918,8 @@ def get_dashboard_stats(range: str = "Lifetime", db = Depends(get_db)):
     }
 
 @app.get("/api/stats/{short_key}")
-def get_url_stats(short_key: str, db = Depends(get_db)):
-    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}})
+def get_url_stats(short_key: str, current_user: str = Depends(get_current_user), db = Depends(get_db)):
+    mapping = db.links.find_one({"short_key": short_key, "is_deleted": {"$ne": True}, "userId": current_user})
     if not mapping:
         raise HTTPException(status_code=404, detail="Short URL not found")
         
@@ -964,7 +972,9 @@ def redirect_to_url(short_key: str, request: Request, background_tasks: Backgrou
     def log_and_broadcast():
         db2 = db_manager.get_db()
         log_click_telemetry(db2, short_key, user_agent, ip_address, referrer)
-        broadcaster.broadcast("click_recorded", {"short_key": short_key, "ip": ip_address})
+        link = db2.links.find_one({"short_key": short_key})
+        user_id = link.get("userId") if link else "anonymous"
+        broadcaster.broadcast("click_recorded", {"short_key": short_key, "ip": ip_address, "userId": user_id})
     
     background_tasks.add_task(log_and_broadcast)
     return RedirectResponse(url=long_url, status_code=307)

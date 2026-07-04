@@ -30,9 +30,14 @@ def log_click_telemetry(db, short_key: str, user_agent_str: str, ip_address: str
         ip_hash = sum(ord(c) for c in (ip_address or "127.0.0.1"))
         country_name = countries[ip_hash % len(countries)]
             
+        # Get userId from the link
+        link = db.links.find_one({"short_key": short_key})
+        user_id = link.get("userId") if link else None
+
         # Create Telemetry Entry
         telemetry = {
             "short_key": short_key,
+            "userId": user_id,
             "ip_address": ip_address or "127.0.0.1",
             "user_agent": user_agent_str,
             "browser": browser_name,
