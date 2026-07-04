@@ -24,12 +24,13 @@
       "dest": "frontend/$1"
     },
     {
-      "src": "/(.+\\.mp4|.+\\.webm|.+\\.ogg)",
-      "dest": "frontend/$1"
-    },
-    {
-      "src": "/(.+\\.png|.+\\.jpg|.+\\.jpeg|.+\\.gif|.+\\.svg|.+\\.webp|.+\\.ico)",
-      "dest": "frontend/$1"
+      "src": "/intro\\.mp4",
+      "dest": "frontend/intro.mp4",
+      "headers": {
+        "Content-Type": "video/mp4",
+        "Cache-Control": "public, max-age=86400",
+        "Accept-Ranges": "bytes"
+      }
     },
     {
       "src": "/(dashboard|links|qr|analytics|campaigns|domains|settings|profile|about|contact|login|register|developers|not-found)",

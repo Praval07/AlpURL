@@ -380,14 +380,15 @@
 
     <!-- Full-bleed background video -->
     <video id="splash-video"
-           src="/Create_a_premium_\u2013_second.mp4"
-           autoplay muted playsinline preload="auto"
+           src="/intro.mp4"
+           autoplay muted playsinline preload="auto" loop
            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;will-change:transform;"
-           aria-hidden="true">
+           aria-hidden="true"
+           onerror="document.getElementById('splash-gradient-bg').style.opacity='1'">
     </video>
 
-    <!-- Animated gradient fallback (shows if video fails) -->
-    <div id="splash-gradient-bg" style="position:absolute;inset:0;z-index:1;opacity:0;background:radial-gradient(ellipse at 20% 50%,#1e3a8a 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,#4c1d95 0%,transparent 50%),radial-gradient(ellipse at 60% 80%,#065f46 0%,transparent 50%),linear-gradient(135deg,#0a0a1a 0%,#060612 100%);animation:gradientShift 6s ease-in-out infinite;"></div>
+    <!-- Animated gradient fallback (shows if video fails / 404 / codec issue) -->
+    <div id="splash-gradient-bg" style="position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .5s;background:radial-gradient(ellipse at 20% 50%,#1e3a8a 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,#4c1d95 0%,transparent 50%),radial-gradient(ellipse at 60% 80%,#065f46 0%,transparent 50%),linear-gradient(135deg,#0a0a1a 0%,#060612 100%);animation:gradientShift 6s ease-in-out infinite;"></div>
 
     <!-- Floating particles canvas -->
     <canvas id="splash-particles" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></canvas>
