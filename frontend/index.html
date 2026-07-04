@@ -77,6 +77,16 @@
         .reveal-on-scroll{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
         .reveal-on-scroll.revealed{opacity:1;transform:translateY(0)}
 
+        /* ── Cinematic Intro Animations ── */
+        @keyframes splashBrandIn{0%{opacity:0;transform:scale(.88) translateY(20px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes taglineFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:.55;transform:translateY(0)}}
+        @keyframes wordmarkGlow{0%,100%{text-shadow:0 0 60px rgba(100,150,255,.6),0 2px 4px rgba(0,0,0,.5)}50%{text-shadow:0 0 100px rgba(100,150,255,.9),0 0 40px rgba(100,150,255,.4),0 2px 4px rgba(0,0,0,.5)}}
+        @keyframes logoPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.3);opacity:.9}}
+        @keyframes spinRing{to{transform:rotate(360deg)}}
+        @keyframes streakFall{from{transform:translateY(-10%) rotate(var(--r,0deg));opacity:0}20%{opacity:1}to{transform:translateY(110vh) rotate(var(--r,0deg));opacity:0}}
+        @keyframes gradientShift{0%,100%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(30deg) brightness(1.1)}}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
         /* ── Scrollbar ── */
         .custom-scrollbar::-webkit-scrollbar{width:6px;height:6px}
         .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
@@ -363,9 +373,74 @@
 
 <body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary">
 
-<!-- Splash Screen Overlay -->
-<div id="splash-screen" class="fixed inset-0 z-[9999] bg-[#09090b] flex flex-col items-center justify-center">
-    <video id="splash-video" src="/Create_a_premium_–_second.mp4" autoplay muted playsinline class="w-full h-full object-contain max-w-4xl max-h-[85vh]"></video>
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  CINEMATIC INTRO SCREEN                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="splash-screen" style="position:fixed;inset:0;z-index:9999;background:#000;overflow:hidden;">
+
+    <!-- Full-bleed background video -->
+    <video id="splash-video"
+           src="/Create_a_premium_\u2013_second.mp4"
+           autoplay muted playsinline preload="auto"
+           style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;will-change:transform;"
+           aria-hidden="true">
+    </video>
+
+    <!-- Animated gradient fallback (shows if video fails) -->
+    <div id="splash-gradient-bg" style="position:absolute;inset:0;z-index:1;opacity:0;background:radial-gradient(ellipse at 20% 50%,#1e3a8a 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,#4c1d95 0%,transparent 50%),radial-gradient(ellipse at 60% 80%,#065f46 0%,transparent 50%),linear-gradient(135deg,#0a0a1a 0%,#060612 100%);animation:gradientShift 6s ease-in-out infinite;"></div>
+
+    <!-- Floating particles canvas -->
+    <canvas id="splash-particles" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></canvas>
+
+    <!-- Light streaks layer -->
+    <div id="splash-streaks" style="position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;"></div>
+
+    <!-- Dark video overlay (improves text readability) -->
+    <div style="position:absolute;inset:0;z-index:4;background:linear-gradient(to bottom,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.15) 40%,rgba(0,0,0,0.55) 100%);pointer-events:none;"></div>
+
+    <!-- ── SOUND PERMISSION BANNER ────────────────────────────────────── -->
+    <div id="splash-sound-banner" style="position:absolute;top:1.5rem;right:1.5rem;z-index:10;display:flex;align-items:center;gap:.75rem;background:rgba(255,255,255,.08);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.15);border-radius:2rem;padding:.5rem 1rem .5rem .75rem;animation:fadeInDown .5s ease .3s both;cursor:pointer;transition:background .2s,transform .2s;" onmouseenter="this.style.background='rgba(255,255,255,.14)'" onmouseleave="this.style.background='rgba(255,255,255,.08)'" id="sound-enable-btn" aria-label="Enable intro sound">
+        <span id="sound-icon" style="font-size:1.25rem;">🔇</span>
+        <span style="font-size:.75rem;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.03em;font-family:Inter,sans-serif;">Enable Sound</span>
+        <div style="width:1px;height:1rem;background:rgba(255,255,255,.2);"></div>
+        <button id="sound-skip-btn" style="font-size:.65rem;color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;padding:0;font-family:Inter,sans-serif;" aria-label="Skip sound">Skip</button>
+    </div>
+
+    <!-- ── CENTRE BRANDING OVERLAY ────────────────────────────────────── -->
+    <div id="splash-brand" style="position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;animation:splashBrandIn .9s cubic-bezier(.22,1,.36,1) .4s both;">
+        <!-- Logo glow ring -->
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+            <div id="logo-glow-ring" style="position:absolute;width:7rem;height:7rem;border-radius:50%;background:radial-gradient(circle,rgba(100,150,255,.35) 0%,transparent 70%);animation:logoPulse 2.5s ease-in-out infinite;"></div>
+            <div style="width:4.5rem;height:4.5rem;border-radius:1.25rem;overflow:hidden;box-shadow:0 0 40px rgba(100,150,255,.5),0 0 80px rgba(100,150,255,.2);">
+                <img src="/logo.png" alt="AlpURL" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"/>
+            </div>
+        </div>
+        <!-- Wordmark -->
+        <div style="text-align:center;">
+            <h1 id="splash-wordmark" style="font-family:'Geist',Inter,sans-serif;font-size:clamp(2rem,6vw,3.5rem);font-weight:700;color:#fff;letter-spacing:-.04em;margin:0;text-shadow:0 0 60px rgba(100,150,255,.6),0 2px 4px rgba(0,0,0,.5);animation:wordmarkGlow 3s ease-in-out infinite;">AlpURL</h1>
+            <p style="font-family:Inter,sans-serif;font-size:clamp(.7rem,2vw,.9rem);font-weight:500;color:rgba(180,200,255,.75);letter-spacing:.18em;text-transform:uppercase;margin:.35rem 0 0;text-shadow:0 0 20px rgba(100,150,255,.4);">AI URL Intelligence Platform</p>
+        </div>
+        <!-- Tagline -->
+        <p id="splash-tagline" style="font-family:Inter,sans-serif;font-size:clamp(.75rem,1.8vw,.95rem);color:rgba(255,255,255,.55);text-align:center;max-width:26rem;line-height:1.6;margin:0;padding:0 1rem;animation:taglineFadeIn 1.1s ease 1.2s both;">Short Links.&nbsp; Smart Connections.&nbsp; Infinite Possibilities.</p>
+    </div>
+
+    <!-- ── LOADING BOTTOM BAR ──────────────────────────────────────────── -->
+    <div id="splash-loading" style="position:absolute;bottom:0;left:0;right:0;z-index:9;padding:2rem 2rem 2.5rem;display:flex;flex-direction:column;align-items:center;gap:.75rem;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%);animation:fadeInUp .7s ease .6s both;">
+        <!-- Status message -->
+        <p id="splash-status" style="font-family:Inter,sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(180,200,255,.6);margin:0;min-height:1em;transition:opacity .4s;">Initializing AlpURL...</p>
+
+        <!-- Progress bar track -->
+        <div style="width:min(20rem,80vw);height:2px;background:rgba(255,255,255,.1);border-radius:9999px;overflow:hidden;">
+            <div id="splash-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#5b7cfd,#4cd7f6,#4edea3);border-radius:9999px;transition:width .3s ease;box-shadow:0 0 8px rgba(91,124,253,.8);"></div>
+        </div>
+
+        <!-- Percentage + spinner row -->
+        <div style="display:flex;align-items:center;gap:.75rem;">
+            <div style="width:1rem;height:1rem;border:2px solid rgba(255,255,255,.1);border-top-color:rgba(91,124,253,.9);border-radius:50%;animation:spinRing .8s linear infinite;"></div>
+            <span id="splash-pct" style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:rgba(180,200,255,.7);min-width:2.5rem;">0%</span>
+        </div>
+    </div>
+
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -752,24 +827,232 @@
 
 <script src="/app.js"></script>
 <script>
-    // Splash Screen Handler
-    (function() {
-        const video = document.getElementById("splash-video");
-        const splash = document.getElementById("splash-screen");
-        if (video && splash) {
-            video.addEventListener("ended", () => {
-                splash.classList.add("fade-out");
-                setTimeout(() => splash.remove(), 800);
-            });
-            // Auto-fade fallback in case of block/autoplay restriction
-            setTimeout(() => {
-                if (splash && splash.parentNode) {
-                    splash.classList.add("fade-out");
-                    setTimeout(() => splash.remove(), 800);
-                }
-            }, 9500);
+// ═══════════════════════════════════════════════════════════
+//  ALPURL – CINEMATIC INTRO ENGINE
+// ═══════════════════════════════════════════════════════════
+(function () {
+    'use strict';
+
+    // ── Elements ────────────────────────────────────────────
+    const splash      = document.getElementById('splash-screen');
+    const video       = document.getElementById('splash-video');
+    const gradBg      = document.getElementById('splash-gradient-bg');
+    const canvas      = document.getElementById('splash-particles');
+    const streaks     = document.getElementById('splash-streaks');
+    const soundBtn    = document.getElementById('sound-enable-btn');
+    const soundSkip   = document.getElementById('sound-skip-btn');
+    const soundIcon   = document.getElementById('sound-icon');
+    const statusEl    = document.getElementById('splash-status');
+    const pctEl       = document.getElementById('splash-pct');
+    const barEl       = document.getElementById('splash-progress-bar');
+
+    if (!splash) return;
+
+    // ── Config ──────────────────────────────────────────────
+    const MESSAGES = [
+        'Initializing AlpURL...',
+        'Connecting Cloud Services...',
+        'Loading AI Engine...',
+        'Loading Analytics...',
+        'Preparing Dashboard...',
+        'Welcome to AlpURL'
+    ];
+    const TOTAL_DURATION = 8500; // ms – matches ~8s video
+    let soundEnabled = localStorage.getItem('alpurl-intro-sound') === 'on';
+    let dismissed    = false;
+    let startTime    = Date.now();
+    let animFrame;
+
+    // ── Sound preference ────────────────────────────────────
+    function applySoundState() {
+        soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+        if (video) video.muted = !soundEnabled;
+    }
+    applySoundState();
+
+    function enableSound() {
+        soundEnabled = true;
+        localStorage.setItem('alpurl-intro-sound', 'on');
+        applySoundState();
+        if (video) { video.muted = false; video.volume = 0.55; }
+        document.getElementById('splash-sound-banner').style.display = 'none';
+    }
+
+    if (soundEnabled) {
+        document.getElementById('splash-sound-banner').style.display = 'none';
+        if (video) { video.muted = false; video.volume = 0.55; }
+    }
+
+    soundBtn.addEventListener('click', function(e) {
+        if (e.target === soundSkip || soundSkip.contains(e.target)) {
+            localStorage.setItem('alpurl-intro-sound', 'off');
+            document.getElementById('splash-sound-banner').style.display = 'none';
+        } else {
+            enableSound();
         }
-    })();
+    });
+
+    // Unlock on first user interaction anywhere
+    function onFirstInteract() {
+        if (soundEnabled && video && video.muted) {
+            video.muted = false;
+            video.volume = 0.55;
+        }
+        document.removeEventListener('click', onFirstInteract);
+        document.removeEventListener('keydown', onFirstInteract);
+    }
+    document.addEventListener('click', onFirstInteract);
+    document.addEventListener('keydown', onFirstInteract);
+
+    // ── Gradient fallback if video fails ────────────────────
+    if (video) {
+        video.addEventListener('error', function () {
+            gradBg.style.opacity = '1';
+            gradBg.style.transition = 'opacity .5s';
+        });
+        video.addEventListener('stalled', function () {
+            gradBg.style.opacity = '0.7';
+        });
+    } else {
+        gradBg.style.opacity = '1';
+    }
+
+    // ── Particle system ─────────────────────────────────────
+    var ctx = canvas ? canvas.getContext('2d') : null;
+    var particles = [];
+
+    function resizeCanvas() {
+        if (!canvas) return;
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function spawnParticle() {
+        return {
+            x:    Math.random() * canvas.width,
+            y:    Math.random() * canvas.height,
+            r:    Math.random() * 1.5 + 0.3,
+            vx:   (Math.random() - 0.5) * 0.25,
+            vy:   -Math.random() * 0.4 - 0.1,
+            alpha: Math.random() * 0.5 + 0.1,
+            decay: Math.random() * 0.003 + 0.001,
+            hue:  Math.random() > 0.5 ? 220 : (Math.random() > 0.5 ? 180 : 160)
+        };
+    }
+
+    for (var i = 0; i < 90; i++) particles.push(spawnParticle());
+
+    function drawParticles() {
+        if (!ctx || !canvas) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(function (p) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = 'hsla(' + p.hue + ',80%,75%,' + p.alpha + ')';
+            ctx.fill();
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= p.decay;
+            if (p.alpha <= 0 || p.y < -5) Object.assign(p, spawnParticle(), {y: canvas.height + 5});
+        });
+    }
+
+    // ── Light streaks ────────────────────────────────────────
+    function createStreak() {
+        if (!streaks) return;
+        var s = document.createElement('div');
+        var left   = Math.random() * 100;
+        var width  = Math.random() * 2 + 0.5;
+        var height = Math.random() * 25 + 10;
+        var dur    = Math.random() * 2 + 1.5;
+        s.style.cssText = [
+            'position:absolute',
+            'left:' + left + 'vw',
+            'top:-10%',
+            'width:' + width + 'px',
+            'height:' + height + 'vh',
+            'background:linear-gradient(to bottom,transparent,rgba(120,160,255,0.35),transparent)',
+            'border-radius:9999px',
+            'transform:rotate(' + (Math.random() * 30 - 15) + 'deg)',
+            'animation:streakFall ' + dur + 's ease-in forwards',
+            'pointer-events:none'
+        ].join(';');
+        streaks.appendChild(s);
+        setTimeout(function () { s.remove(); }, dur * 1000);
+    }
+    var streakInterval = setInterval(createStreak, 600);
+
+    // ── Progress animation ───────────────────────────────────
+    var msgIdx = 0;
+
+    function updateProgress() {
+        if (dismissed) return;
+        var elapsed  = Date.now() - startTime;
+        var pct      = Math.min(100, Math.floor((elapsed / TOTAL_DURATION) * 100));
+        var msgPos   = Math.floor((pct / 100) * (MESSAGES.length - 1));
+
+        if (barEl) barEl.style.width = pct + '%';
+        if (pctEl)  pctEl.textContent = pct + '%';
+
+        if (msgPos !== msgIdx) {
+            msgIdx = msgPos;
+            if (statusEl) {
+                statusEl.style.opacity = '0';
+                setTimeout(function () {
+                    statusEl.textContent = MESSAGES[msgIdx] || MESSAGES[MESSAGES.length - 1];
+                    statusEl.style.opacity = '1';
+                }, 250);
+            }
+        }
+
+        drawParticles();
+
+        if (pct < 100) {
+            animFrame = requestAnimationFrame(updateProgress);
+        } else {
+            // Finished – wait a moment then dismiss
+            setTimeout(dismissSplash, 600);
+        }
+    }
+
+    animFrame = requestAnimationFrame(updateProgress);
+
+    // ── Dismiss / transition out ─────────────────────────────
+    function dismissSplash() {
+        if (dismissed) return;
+        dismissed = true;
+        clearInterval(streakInterval);
+        cancelAnimationFrame(animFrame);
+
+        // Final message
+        if (statusEl) statusEl.textContent = 'Welcome to AlpURL';
+        if (barEl)    barEl.style.width = '100%';
+        if (pctEl)    pctEl.textContent = '100%';
+
+        // Cinematic fade-blur-scale exit
+        splash.style.transition = 'opacity .85s cubic-bezier(.4,0,.2,1), filter .85s cubic-bezier(.4,0,.2,1), transform .85s cubic-bezier(.4,0,.2,1)';
+        splash.style.opacity    = '0';
+        splash.style.filter     = 'blur(8px)';
+        splash.style.transform  = 'scale(1.04)';
+
+        setTimeout(function () {
+            if (splash && splash.parentNode) splash.remove();
+        }, 900);
+    }
+
+    // ── Tie dismissal to video end ───────────────────────────
+    if (video) {
+        video.addEventListener('ended', function () {
+            startTime = Date.now() - TOTAL_DURATION + 200; // force progress to 100%
+        });
+    }
+
+    // ── Hard fallback cap ───────────────────────────────────
+    setTimeout(function () { dismissSplash(); }, TOTAL_DURATION + 1500);
+
+})();
 </script>
 </body>
 </html>
