@@ -381,7 +381,7 @@
     <!-- Full-bleed background video -->
     <video id="splash-video"
            src="/intro.mp4"
-           autoplay muted playsinline preload="auto" loop
+           autoplay muted playsinline preload="auto"
            style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;will-change:transform;"
            aria-hidden="true"
            onerror="document.getElementById('splash-gradient-bg').style.opacity='1'">
@@ -423,23 +423,6 @@
         </div>
         <!-- Tagline -->
         <p id="splash-tagline" style="font-family:Inter,sans-serif;font-size:clamp(.75rem,1.8vw,.95rem);color:rgba(255,255,255,.55);text-align:center;max-width:26rem;line-height:1.6;margin:0;padding:0 1rem;animation:taglineFadeIn 1.1s ease 1.2s both;">Short Links.&nbsp; Smart Connections.&nbsp; Infinite Possibilities.</p>
-    </div>
-
-    <!-- ── LOADING BOTTOM BAR ──────────────────────────────────────────── -->
-    <div id="splash-loading" style="position:absolute;bottom:0;left:0;right:0;z-index:9;padding:2rem 2rem 2.5rem;display:flex;flex-direction:column;align-items:center;gap:.75rem;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%);animation:fadeInUp .7s ease .6s both;">
-        <!-- Status message -->
-        <p id="splash-status" style="font-family:Inter,sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(180,200,255,.6);margin:0;min-height:1em;transition:opacity .4s;">Initializing AlpURL...</p>
-
-        <!-- Progress bar track -->
-        <div style="width:min(20rem,80vw);height:2px;background:rgba(255,255,255,.1);border-radius:9999px;overflow:hidden;">
-            <div id="splash-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#5b7cfd,#4cd7f6,#4edea3);border-radius:9999px;transition:width .3s ease;box-shadow:0 0 8px rgba(91,124,253,.8);"></div>
-        </div>
-
-        <!-- Percentage + spinner row -->
-        <div style="display:flex;align-items:center;gap:.75rem;">
-            <div style="width:1rem;height:1rem;border:2px solid rgba(255,255,255,.1);border-top-color:rgba(91,124,253,.9);border-radius:50%;animation:spinRing .8s linear infinite;"></div>
-            <span id="splash-pct" style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:rgba(180,200,255,.7);min-width:2.5rem;">0%</span>
-        </div>
     </div>
 
 </div>
@@ -829,74 +812,73 @@
 <script src="/app.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════
-//  ALPURL – CINEMATIC INTRO ENGINE
+//  ALPURL – CINEMATIC INTRO ENGINE (CLEAN)
 // ═══════════════════════════════════════════════════════════
 (function () {
     'use strict';
 
-    // ── Elements ────────────────────────────────────────────
-    const splash      = document.getElementById('splash-screen');
-    const video       = document.getElementById('splash-video');
-    const gradBg      = document.getElementById('splash-gradient-bg');
-    const canvas      = document.getElementById('splash-particles');
-    const streaks     = document.getElementById('splash-streaks');
-    const soundBtn    = document.getElementById('sound-enable-btn');
-    const soundSkip   = document.getElementById('sound-skip-btn');
-    const soundIcon   = document.getElementById('sound-icon');
-    const statusEl    = document.getElementById('splash-status');
-    const pctEl       = document.getElementById('splash-pct');
-    const barEl       = document.getElementById('splash-progress-bar');
+    // ── Skip intro on return visits ─────────────────────────────
+    var INTRO_KEY  = 'alpurl-intro-played';
+    var SOUND_KEY  = 'alpurl-intro-sound';
+    var splash     = document.getElementById('splash-screen');
+
+    // If user has seen the intro before and hasn’t re-enabled it, skip
+    if (localStorage.getItem(INTRO_KEY) === 'true') {
+        if (splash) splash.remove();
+        return;
+    }
 
     if (!splash) return;
 
-    // ── Config ──────────────────────────────────────────────
-    const MESSAGES = [
-        'Initializing AlpURL...',
-        'Connecting Cloud Services...',
-        'Loading AI Engine...',
-        'Loading Analytics...',
-        'Preparing Dashboard...',
-        'Welcome to AlpURL'
-    ];
-    const TOTAL_DURATION = 4250; // ms – ~8s video at 2× playback speed
-    let soundEnabled = localStorage.getItem('alpurl-intro-sound') === 'on';
-    let dismissed    = false;
-    let startTime    = Date.now();
-    let animFrame;
+    var video    = document.getElementById('splash-video');
+    var gradBg   = document.getElementById('splash-gradient-bg');
+    var canvas   = document.getElementById('splash-particles');
+    var streaks  = document.getElementById('splash-streaks');
+    var soundBtn = document.getElementById('sound-enable-btn');
+    var soundSkip = document.getElementById('sound-skip-btn');
+    var soundIcon = document.getElementById('sound-icon');
 
-    // ── Sound preference ────────────────────────────────────
-    function applySoundState() {
+    var soundEnabled = localStorage.getItem(SOUND_KEY) === 'on';
+    var dismissed    = false;
+    var animFrame;
+
+    // ── Sound ───────────────────────────────────────────────
+    function applySound() {
+        if (!soundIcon) return;
         soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
         if (video) video.muted = !soundEnabled;
     }
-    applySoundState();
+    applySound();
 
-    // ── 2× playback speed ───────────────────────────────────
+    // 2× playback speed
     if (video) video.playbackRate = 2.0;
+
+    // If previously enabled sound, auto-apply and hide banner
+    if (soundEnabled) {
+        if (soundBtn) soundBtn.style.display = 'none';
+        if (video) { video.muted = false; video.volume = 0.55; }
+    }
 
     function enableSound() {
         soundEnabled = true;
-        localStorage.setItem('alpurl-intro-sound', 'on');
-        applySoundState();
+        localStorage.setItem(SOUND_KEY, 'on');
+        applySound();
         if (video) { video.muted = false; video.volume = 0.55; }
-        document.getElementById('splash-sound-banner').style.display = 'none';
+        if (soundBtn) soundBtn.style.display = 'none';
     }
 
-    if (soundEnabled) {
-        document.getElementById('splash-sound-banner').style.display = 'none';
-        if (video) { video.muted = false; video.volume = 0.55; }
+    if (soundBtn) {
+        soundBtn.addEventListener('click', function (e) {
+            if (soundSkip && (e.target === soundSkip || soundSkip.contains(e.target))) {
+                localStorage.setItem(SOUND_KEY, 'off');
+                soundBtn.style.display = 'none';
+            } else {
+                enableSound();
+            }
+        });
     }
 
-    soundBtn.addEventListener('click', function(e) {
-        if (e.target === soundSkip || soundSkip.contains(e.target)) {
-            localStorage.setItem('alpurl-intro-sound', 'off');
-            document.getElementById('splash-sound-banner').style.display = 'none';
-        } else {
-            enableSound();
-        }
-    });
-
-    // Unlock on first user interaction anywhere
+    // Unlock audio on first user gesture (browsers require this)
     function onFirstInteract() {
         if (soundEnabled && video && video.muted) {
             video.muted = false;
@@ -908,153 +890,104 @@
     document.addEventListener('click', onFirstInteract);
     document.addEventListener('keydown', onFirstInteract);
 
-    // ── Gradient fallback if video fails ────────────────────
+    // ── Video fallback ──────────────────────────────────────────
     if (video) {
         video.addEventListener('error', function () {
-            gradBg.style.opacity = '1';
-            gradBg.style.transition = 'opacity .5s';
+            if (gradBg) gradBg.style.opacity = '1';
+            // Fallback: dismiss after 4 seconds if video errors
+            setTimeout(dismissSplash, 4000);
         });
-        video.addEventListener('stalled', function () {
-            gradBg.style.opacity = '0.7';
-        });
-    } else {
+    } else if (gradBg) {
         gradBg.style.opacity = '1';
     }
 
-    // ── Particle system ─────────────────────────────────────
+    // ── Particles (ambient depth effect on video) ────────────────
     var ctx = canvas ? canvas.getContext('2d') : null;
     var particles = [];
 
-    function resizeCanvas() {
-        if (!canvas) return;
+    if (canvas) {
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
+        window.addEventListener('resize', function () {
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        for (var i = 0; i < 60; i++) particles.push(spawnParticle());
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     function spawnParticle() {
         return {
-            x:    Math.random() * canvas.width,
-            y:    Math.random() * canvas.height,
-            r:    Math.random() * 1.5 + 0.3,
-            vx:   (Math.random() - 0.5) * 0.25,
-            vy:   -Math.random() * 0.4 - 0.1,
-            alpha: Math.random() * 0.5 + 0.1,
+            x: Math.random() * (canvas ? canvas.width : window.innerWidth),
+            y: Math.random() * (canvas ? canvas.height : window.innerHeight),
+            r: Math.random() * 1.5 + 0.3,
+            vx: (Math.random() - 0.5) * 0.2,
+            vy: -Math.random() * 0.3 - 0.1,
+            alpha: Math.random() * 0.4 + 0.1,
             decay: Math.random() * 0.003 + 0.001,
-            hue:  Math.random() > 0.5 ? 220 : (Math.random() > 0.5 ? 180 : 160)
+            hue: Math.random() > 0.5 ? 220 : 180
         };
     }
 
-    for (var i = 0; i < 90; i++) particles.push(spawnParticle());
-
-    function drawParticles() {
-        if (!ctx || !canvas) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(function (p) {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle = 'hsla(' + p.hue + ',80%,75%,' + p.alpha + ')';
-            ctx.fill();
-            p.x += p.vx;
-            p.y += p.vy;
-            p.alpha -= p.decay;
-            if (p.alpha <= 0 || p.y < -5) Object.assign(p, spawnParticle(), {y: canvas.height + 5});
-        });
-    }
-
-    // ── Light streaks ────────────────────────────────────────
-    function createStreak() {
-        if (!streaks) return;
-        var s = document.createElement('div');
-        var left   = Math.random() * 100;
-        var width  = Math.random() * 2 + 0.5;
-        var height = Math.random() * 25 + 10;
-        var dur    = Math.random() * 2 + 1.5;
-        s.style.cssText = [
-            'position:absolute',
-            'left:' + left + 'vw',
-            'top:-10%',
-            'width:' + width + 'px',
-            'height:' + height + 'vh',
-            'background:linear-gradient(to bottom,transparent,rgba(120,160,255,0.35),transparent)',
-            'border-radius:9999px',
-            'transform:rotate(' + (Math.random() * 30 - 15) + 'deg)',
-            'animation:streakFall ' + dur + 's ease-in forwards',
-            'pointer-events:none'
-        ].join(';');
-        streaks.appendChild(s);
-        setTimeout(function () { s.remove(); }, dur * 1000);
-    }
-    var streakInterval = setInterval(createStreak, 600);
-
-    // ── Progress animation ───────────────────────────────────
-    var msgIdx = 0;
-
-    function updateProgress() {
+    function drawFrame() {
         if (dismissed) return;
-        var elapsed  = Date.now() - startTime;
-        var pct      = Math.min(100, Math.floor((elapsed / TOTAL_DURATION) * 100));
-        var msgPos   = Math.floor((pct / 100) * (MESSAGES.length - 1));
-
-        if (barEl) barEl.style.width = pct + '%';
-        if (pctEl)  pctEl.textContent = pct + '%';
-
-        if (msgPos !== msgIdx) {
-            msgIdx = msgPos;
-            if (statusEl) {
-                statusEl.style.opacity = '0';
-                setTimeout(function () {
-                    statusEl.textContent = MESSAGES[msgIdx] || MESSAGES[MESSAGES.length - 1];
-                    statusEl.style.opacity = '1';
-                }, 250);
-            }
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(function (p) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'hsla(' + p.hue + ',80%,75%,' + p.alpha + ')';
+                ctx.fill();
+                p.x += p.vx; p.y += p.vy; p.alpha -= p.decay;
+                if (p.alpha <= 0 || p.y < -5) Object.assign(p, spawnParticle(), { y: canvas.height + 5 });
+            });
         }
-
-        drawParticles();
-
-        if (pct < 100) {
-            animFrame = requestAnimationFrame(updateProgress);
-        } else {
-            // Finished – wait a moment then dismiss
-            setTimeout(dismissSplash, 600);
-        }
+        animFrame = requestAnimationFrame(drawFrame);
     }
+    animFrame = requestAnimationFrame(drawFrame);
 
-    animFrame = requestAnimationFrame(updateProgress);
+    // ── Light streaks ─────────────────────────────────────────
+    function createStreak() {
+        if (!streaks || dismissed) return;
+        var s = document.createElement('div');
+        var dur = Math.random() * 2 + 1.5;
+        s.style.cssText = 'position:absolute;left:' + (Math.random() * 100) + 'vw;top:-10%;width:' +
+            (Math.random() * 2 + 0.5) + 'px;height:' + (Math.random() * 25 + 10) + 'vh;' +
+            'background:linear-gradient(to bottom,transparent,rgba(120,160,255,0.3),transparent);' +
+            'border-radius:9999px;transform:rotate(' + (Math.random() * 30 - 15) + 'deg);' +
+            'animation:streakFall ' + dur + 's ease-in forwards;pointer-events:none';
+        streaks.appendChild(s);
+        setTimeout(function () { if (s.parentNode) s.remove(); }, dur * 1000);
+    }
+    var streakInterval = setInterval(createStreak, 700);
 
-    // ── Dismiss / transition out ─────────────────────────────
+    // ── Dismiss – triggered by video end ────────────────────────
     function dismissSplash() {
         if (dismissed) return;
         dismissed = true;
         clearInterval(streakInterval);
         cancelAnimationFrame(animFrame);
 
-        // Final message
-        if (statusEl) statusEl.textContent = 'Welcome to AlpURL';
-        if (barEl)    barEl.style.width = '100%';
-        if (pctEl)    pctEl.textContent = '100%';
+        // Mark intro as played so it is skipped on future visits
+        localStorage.setItem(INTRO_KEY, 'true');
 
-        // Cinematic fade-blur-scale exit
-        splash.style.transition = 'opacity .85s cubic-bezier(.4,0,.2,1), filter .85s cubic-bezier(.4,0,.2,1), transform .85s cubic-bezier(.4,0,.2,1)';
-        splash.style.opacity    = '0';
-        splash.style.filter     = 'blur(8px)';
-        splash.style.transform  = 'scale(1.04)';
+        // Smooth cinematic fade-out
+        splash.style.transition = 'opacity .7s ease, filter .7s ease';
+        splash.style.opacity = '0';
+        splash.style.filter  = 'blur(6px)';
 
         setTimeout(function () {
             if (splash && splash.parentNode) splash.remove();
-        }, 900);
+        }, 750);
     }
 
-    // ── Tie dismissal to video end ───────────────────────────
+    // ── Primary trigger: video naturally ends ──────────────────
     if (video) {
-        video.addEventListener('ended', function () {
-            startTime = Date.now() - TOTAL_DURATION + 200; // force progress to 100%
-        });
+        video.addEventListener('ended', dismissSplash);
     }
 
-    // ── Hard fallback cap ───────────────────────────────────
-    setTimeout(function () { dismissSplash(); }, TOTAL_DURATION + 1500);
+    // ── Hard fallback: in case video never fires ended (e.g. mobile block)
+    // At 2× speed, ~8s video = ~4s. Give 2s buffer = 6s max.
+    setTimeout(dismissSplash, 6000);
 
 })();
 </script>
