@@ -706,7 +706,7 @@ function renderPublicLoginPage(container) {
             initSessionState();
             window.location.hash = "#/dashboard";
         } catch (e) {
-            showToast("Authentication failed", "error");
+            showToast(e.message || "Authentication failed", "error");
         }
     });
 }
@@ -765,7 +765,7 @@ function renderPublicRegisterPage(container) {
             initSessionState();
             window.location.hash = "#/dashboard";
         } catch (e) {
-            showToast("Registration failed", "error");
+            showToast(e.message || "Registration failed", "error");
         }
     });
 }
@@ -2817,7 +2817,7 @@ $q("#login-form")?.addEventListener("submit", async e => {
         initSessionState();
         window.location.hash = "#/dashboard";
     } catch (e) {
-        showToast("Authentication failed", "error");
+        showToast(e.message || "Authentication failed", "error");
     }
 });
 
@@ -2841,7 +2841,7 @@ $q("#register-form")?.addEventListener("submit", async e => {
         initSessionState();
         window.location.hash = "#/dashboard";
     } catch (e) {
-        showToast("Registration failed", "error");
+        showToast(e.message || "Registration failed", "error");
     }
 });
 

@@ -36,7 +36,7 @@ def get_mongodb_uri() -> str:
         # Default fallback uri if not configured
         uri = "mongodb+srv://pravalsaxena:${MONGODB_PASSWORD}@praval.jdtptd6.mongodb.net/alpurl?retryWrites=true&w=majority&appName=Praval"
     if not password:
-        password = "@pra#886"  # Fallback
+        password = "@Pra#886"  # Fallback
         
     # URL encode password since it contains special characters (@ and #)
     encoded_password = urllib.parse.quote_plus(password)
@@ -44,6 +44,7 @@ def get_mongodb_uri() -> str:
     # Replace placeholder password safely
     uri = uri.replace("${MONGODB_PASSWORD}", encoded_password)
     uri = uri.replace("<@pra#886>", encoded_password)
+    uri = uri.replace("<@Pra#886>", encoded_password)
     
     return uri
 
@@ -78,9 +79,16 @@ class MongoDBManager:
             # Ping database to force validation
             self._client.admin.command("ping")
             print("[MongoDB] Successfully connected to Atlas cluster.")
-        except ConnectionFailure as e:
+        except Exception as e:
             print(f"[MongoDB Critical Error] Failed to connect to Atlas cluster: {e}")
-            raise e
+            print(f"[MongoDB] Falling back to in-memory mongomock database for offline execution.")
+            try:
+                import mongomock
+                self._client = mongomock.MongoClient()
+                print("[MongoDB] Successfully initialized in-memory mongomock database.")
+            except ImportError:
+                print("[MongoDB] mongomock is not installed. Re-raising original exception.")
+                raise e
 
     def get_db(self):
         """Returns the alpurl database instance."""

@@ -1,14 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.app.main import app, get_db
-from backend.app.database import get_mongodb_uri
-from pymongo import MongoClient
+import mongomock
 
-# Setup clean testing MongoDB Atlas DB using an independent connection for teardown safety
+# Setup clean testing MongoDB DB using mongomock for isolated, offline testing
 @pytest.fixture(scope="module")
 def db_session():
-    uri = get_mongodb_uri()
-    client = MongoClient(uri)
+    client = mongomock.MongoClient()
     test_db = client.get_database("alpurl_test")
     
     # Drop all collections prior to tests to ensure isolation
