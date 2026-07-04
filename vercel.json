@@ -16,11 +16,23 @@
       "dest": "api/index.py"
     },
     {
-      "src": "/(style\\.css|app\\.js|favicon\\.ico)",
+      "src": "/(style\\.css|app\\.js|manifest\\.json|robots\\.txt|sitemap\\.xml)",
       "dest": "frontend/$1"
     },
     {
-      "src": "/(dashboard|links|qr|analytics|campaigns|domains|settings|profile)",
+      "src": "/(favicon\\.ico|favicon-16x16\\.png|favicon-32x32\\.png|apple-touch-icon\\.png|android-chrome-192\\.png|android-chrome-512\\.png|mask-icon\\.svg|logo\\.png)",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/(.+\\.mp4|.+\\.webm|.+\\.ogg)",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/(.+\\.png|.+\\.jpg|.+\\.jpeg|.+\\.gif|.+\\.svg|.+\\.webp|.+\\.ico)",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/(dashboard|links|qr|analytics|campaigns|domains|settings|profile|about|contact|login|register|developers|not-found)",
       "dest": "frontend/index.html"
     },
     {
@@ -33,3 +45,4 @@
     }
   ]
 }
+

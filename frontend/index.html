@@ -857,7 +857,7 @@
         'Preparing Dashboard...',
         'Welcome to AlpURL'
     ];
-    const TOTAL_DURATION = 8500; // ms – matches ~8s video
+    const TOTAL_DURATION = 4250; // ms – ~8s video at 2× playback speed
     let soundEnabled = localStorage.getItem('alpurl-intro-sound') === 'on';
     let dismissed    = false;
     let startTime    = Date.now();
@@ -869,6 +869,9 @@
         if (video) video.muted = !soundEnabled;
     }
     applySoundState();
+
+    // ── 2× playback speed ───────────────────────────────────
+    if (video) video.playbackRate = 2.0;
 
     function enableSound() {
         soundEnabled = true;
