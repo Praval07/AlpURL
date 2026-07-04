@@ -134,3 +134,43 @@ def test_anonymous_shorten_and_redirect(client):
     response = client.get(f"/{short_key}", follow_redirects=False)
     assert response.status_code == 307
     assert response.headers["location"] == "https://example.com"
+
+def test_static_routes_and_seo(client):
+    # Test sitemap
+    res = client.get("/sitemap.xml")
+    assert res.status_code == 200
+    assert "application/xml" in res.headers["content-type"]
+    assert "https://alpurl.vercel.app/" in res.text
+
+    # Test robots
+    res = client.get("/robots.txt")
+    assert res.status_code == 200
+    assert "text/plain" in res.headers["content-type"]
+    assert "User-agent: *" in res.text
+
+    # Test pre-rendered dynamic SEO page title
+    res = client.get("/about")
+    assert res.status_code == 200
+    assert "About AlpURL" in res.text
+
+    res = client.get("/login")
+    assert res.status_code == 200
+    assert "Login | AlpURL" in res.text
+
+def test_bot_redirection_interception(client, db_session):
+    # Shorten a link
+    res = client.post("/api/shorten", json={"long_url": "https://example.com/target"})
+    assert res.status_code == 200
+    short_key = res.json()["short_key"]
+
+    # Regular user request (redirects)
+    res_user = client.get(f"/{short_key}", follow_redirects=False)
+    assert res_user.status_code == 307
+    assert res_user.headers["location"] == "https://example.com/target"
+
+    # Social scraper bot request (serves bot HTML)
+    bot_headers = {"User-Agent": "Slackbot 1.0 (+https://api.slack.com/robots)"}
+    res_bot = client.get(f"/{short_key}", headers=bot_headers, follow_redirects=False)
+    assert res_bot.status_code == 200
+    assert "<meta property=\"og:title\"" in res_bot.text
+    assert "https://example.com/target" in res_bot.text

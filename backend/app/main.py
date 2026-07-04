@@ -6,10 +6,11 @@ import hashlib
 import base64
 import time
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks
-from fastapi.responses import RedirectResponse, FileResponse, StreamingResponse
+from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks, Response
+from fastapi.responses import RedirectResponse, FileResponse, StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List, AsyncGenerator
 
@@ -76,6 +77,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 redirection_cache = {}
 
@@ -941,15 +944,221 @@ def get_url_stats(short_key: str, current_user: str = Depends(get_current_user),
         "clicks": clicks_list
     }
 
+# Mapped page metadata for Enterprise SEO
+SEO_METADATA = {
+    "/": {
+        "title": "AlpURL – AI-Powered URL Shortener, QR Code Generator & Link Analytics",
+        "description": "AlpURL is a free AI-powered URL shortener and QR code generator that helps you create branded short links, generate QR codes, and track real-time analytics with enterprise-grade performance.",
+        "keywords": "url shortener, qr code generator, link analytics, custom domain, branded links, smart links, alpurl",
+        "structured_data": {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Organization",
+                    "@id": "https://alpurl.vercel.app/#organization",
+                    "name": "AlpURL",
+                    "url": "https://alpurl.vercel.app/",
+                    "logo": "https://alpurl.vercel.app/favicon.ico"
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": "https://alpurl.vercel.app/#website",
+                    "url": "https://alpurl.vercel.app/",
+                    "name": "AlpURL",
+                    "publisher": {"@id": "https://alpurl.vercel.app/#organization"},
+                    "potentialAction": {
+                        "@type": "SearchAction",
+                        "target": "https://alpurl.vercel.app/?q={search_term_string}",
+                        "query-input": "required name=search_term_string"
+                    }
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "name": "AlpURL",
+                    "operatingSystem": "All",
+                    "applicationCategory": "UtilitiesApplication",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0.00",
+                        "priceCurrency": "USD"
+                    }
+                }
+            ]
+        }
+    },
+    "/login": {
+        "title": "Login | AlpURL",
+        "description": "Sign in to your AlpURL account to access your links dashboard, custom domains, and link analytics."
+    },
+    "/register": {
+        "title": "Create Your Free Account | AlpURL",
+        "description": "Create a free AlpURL account to unlock branded short links, custom domains, advanced QR code generator, and real-time analytics."
+    },
+    "/dashboard": {
+        "title": "Dashboard | AlpURL",
+        "description": "Manage your shortened URLs, track real-time link analytics, and generate custom QR codes on the AlpURL Dashboard."
+    },
+    "/dashboard/links": {
+        "title": "My Links | AlpURL",
+        "description": "View and manage your shortened links, update redirection destinations, and check performance metrics on AlpURL."
+    },
+    "/dashboard/qrcodes": {
+        "title": "QR Code Generator | AlpURL",
+        "description": "Generate premium, customizable QR codes for your links, download vector formats, and track scan counts with AlpURL."
+    },
+    "/dashboard/analytics": {
+        "title": "Analytics Dashboard | AlpURL",
+        "description": "Dive deep into real-time click telemetry, country distribution, browser analysis, and referrer logs on AlpURL."
+    },
+    "/dashboard/domains": {
+        "title": "Custom Domains | AlpURL",
+        "description": "Configure your brand custom domains for smart redirection links on AlpURL."
+    },
+    "/dashboard/settings": {
+        "title": "Settings | AlpURL",
+        "description": "Configure your profile, notification channels, password preferences, and workspace settings on AlpURL."
+    },
+    "/about": {
+        "title": "About AlpURL",
+        "description": "Learn about AlpURL, the AI-powered URL intelligence platform designed for developers, creators, and enterprise teams."
+    },
+    "/contact": {
+        "title": "Contact AlpURL",
+        "description": "Get in touch with the AlpURL support team for enterprise plans, API integrations, or feedback."
+    }
+}
+
+def serve_spa_html(path: str):
+    normalized_path = path
+    if path in ["/links", "/qr", "/profile", "/settings"]:
+        normalized_path = f"/dashboard/{path[1:]}"
+    elif normalized_path not in SEO_METADATA:
+        # Resolve subpages to dashboard
+        if normalized_path.startswith("/dashboard/"):
+            pass
+        else:
+            normalized_path = "/"
+            
+    page_meta = SEO_METADATA.get(normalized_path) or SEO_METADATA.get(f"/dashboard/{normalized_path.split('/')[-1]}") or SEO_METADATA["/"]
+    
+    html_path = os.path.join(static_dir, "index.html")
+    if not os.path.exists(html_path):
+        return HTMLResponse("index.html not found", status_code=404)
+        
+    with open(html_path, "r", encoding="utf-8") as f:
+        content = f.read()
+        
+    title_tag = f"<title>{page_meta['title']}</title>"
+    
+    meta_tags = f"""<meta name="description" content="{page_meta['description']}"/>
+    <meta name="keywords" content="{page_meta.get('keywords', 'url shortener, qr code, link analytics, custom domain, branded links, smart links, alpurl')}"/>
+    <meta name="robots" content="index, follow"/>
+    <meta property="og:title" content="{page_meta['title']}"/>
+    <meta property="og:description" content="{page_meta['description']}"/>
+    <meta property="og:image" content="https://alpurl.vercel.app/favicon.ico"/>
+    <meta property="og:url" content="https://alpurl.vercel.app{path}"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="AlpURL"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="{page_meta['title']}"/>
+    <meta name="twitter:description" content="{page_meta['description']}"/>
+    <meta name="twitter:image" content="https://alpurl.vercel.app/favicon.ico"/>"""
+    
+    canonical_tag = f'<link rel="canonical" href="https://alpurl.vercel.app{path}"/>'
+    
+    structured_data = page_meta.get('structured_data')
+    if not structured_data:
+        structured_data = {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": page_meta['title'],
+            "description": page_meta['description'],
+            "url": f"https://alpurl.vercel.app{path}"
+        }
+    
+    structured_tag = f'<script type="application/ld+json">{json.dumps(structured_data)}</script>'
+    
+    content = content.replace("<!-- SEO_TITLE -->", title_tag)
+    content = content.replace("<!-- SEO_META -->", meta_tags)
+    content = content.replace("<!-- CANONICAL_URL -->", canonical_tag)
+    content = content.replace("<!-- SEO_STRUCTURED_DATA -->", structured_tag)
+    
+    return HTMLResponse(content=content, status_code=200)
+
+@app.get("/")
+@app.get("/login")
+@app.get("/register")
+@app.get("/dashboard")
+@app.get("/dashboard/links")
+@app.get("/dashboard/qrcodes")
+@app.get("/dashboard/analytics")
+@app.get("/dashboard/domains")
+@app.get("/dashboard/settings")
+@app.get("/about")
+@app.get("/contact")
+@app.get("/links")
+@app.get("/qr")
+@app.get("/profile")
+@app.get("/settings")
+def get_spa_page(request: Request):
+    return serve_spa_html(request.url.path)
+
+@app.get("/sitemap.xml")
+def get_sitemap():
+    sitemap_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url><loc>https://alpurl.vercel.app/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+    <url><loc>https://alpurl.vercel.app/login</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://alpurl.vercel.app/register</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://alpurl.vercel.app/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+    <url><loc>https://alpurl.vercel.app/contact</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>"""
+    return Response(content=sitemap_xml, media_type="application/xml")
+
+@app.get("/robots.txt")
+def get_robots():
+    robots_txt = """User-agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /login
+Allow: /register
+Disallow: /dashboard*
+Disallow: /settings*
+Disallow: /profile*
+Sitemap: https://alpurl.vercel.app/sitemap.xml"""
+    return Response(content=robots_txt, media_type="text/plain")
+
+@app.get("/manifest.json")
+def get_manifest_file():
+    manifest_path = os.path.join(static_dir, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/json")
+    raise HTTPException(status_code=404, detail="Manifest file not found")
+
 # ═══════════════════════════════════════════════════════════════
 #  REDIRECT HANDLER
 # ═══════════════════════════════════════════════════════════════
 @app.get("/{short_key}")
 def redirect_to_url(short_key: str, request: Request, background_tasks: BackgroundTasks, db = Depends(get_db)):
-    if short_key in ["style.css", "app.js", "favicon.ico"]:
+    static_files = [
+        "style.css", "app.js", "favicon.ico", "logo.png", "Create_a_premium_–_second.mp4",
+        "manifest.json", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png",
+        "android-chrome-192.png", "android-chrome-512.png", "mask-icon.svg"
+    ]
+    if short_key in static_files:
         file_path = os.path.join(static_dir, short_key)
         if os.path.exists(file_path):
-            return FileResponse(file_path)
+            media_type = None
+            if short_key.endswith(".png"):
+                media_type = "image/png"
+            elif short_key.endswith(".mp4"):
+                media_type = "video/mp4"
+            elif short_key.endswith(".json"):
+                media_type = "application/json"
+            elif short_key.endswith(".svg"):
+                media_type = "image/svg+xml"
+            return FileResponse(file_path, media_type=media_type)
         raise HTTPException(status_code=404, detail="File Not Found")
 
     long_url = redirection_cache.get(short_key)
@@ -977,6 +1186,35 @@ def redirect_to_url(short_key: str, request: Request, background_tasks: Backgrou
         broadcaster.broadcast("click_recorded", {"short_key": short_key, "ip": ip_address, "userId": user_id})
     
     background_tasks.add_task(log_and_broadcast)
+
+    # Scraper/Bot detection for dynamic social sharing preview
+    ua_lower = user_agent.lower()
+    bots = ["slackbot", "twitterbot", "linkedinbot", "facebookexternalhit", "discordbot", "whatsapp", "telegrambot", "googlebot", "bingbot"]
+    if any(bot in ua_lower for bot in bots):
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>AlpURL — Short Link</title>
+    <meta name="description" content="Branded short link generated with AlpURL. Redirecting to {long_url}."/>
+    <meta property="og:title" content="AlpURL — Short Link"/>
+    <meta property="og:description" content="Branded short link generated with AlpURL. Redirecting to {long_url}."/>
+    <meta property="og:image" content="https://alpurl.vercel.app/favicon.ico"/>
+    <meta property="og:url" content="https://alpurl.vercel.app/{short_key}"/>
+    <meta property="og:type" content="website"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="AlpURL — Short Link"/>
+    <meta name="twitter:description" content="Branded short link generated with AlpURL. Redirecting to {long_url}."/>
+    <meta name="twitter:image" content="https://alpurl.vercel.app/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <meta http-equiv="refresh" content="0;url={long_url}"/>
+</head>
+<body>
+    <p>Redirecting to <a href="{long_url}">{long_url}</a>...</p>
+</body>
+</html>"""
+        return HTMLResponse(content=html_content, status_code=200)
+
     return RedirectResponse(url=long_url, status_code=307)
 
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

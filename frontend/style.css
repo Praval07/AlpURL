@@ -890,3 +890,13 @@ body.dark-theme {
         grid-template-columns: 1fr;
     }
 }
+
+/* Splash Screen Fade-out */
+#splash-screen {
+    transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+}
+#splash-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.05);
+}

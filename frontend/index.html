@@ -3,14 +3,19 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta name="description" content="AlpURL — AI-powered URL shortener and QR code generator. Shorten links, generate QR codes, and track analytics — free forever."/>
-    <meta name="keywords" content="AlpURL, URL shortener, link shortener, QR code generator, link analytics, free URL shortener, AI URL"/>
     <meta name="author" content="Antigraviti Dev"/>
-    <meta property="og:title" content="AlpURL — Short Links. Smart Connections. Infinite Possibilities."/>
-    <meta property="og:description" content="The AI-powered URL intelligence platform. Shorten, track, and optimize every link — free forever."/>
-    <meta property="og:type" content="website"/>
-    <meta name="twitter:card" content="summary_large_image"/>
-    <title>AlpURL — Short Links. Smart Connections. Infinite Possibilities.</title>
+    <meta name="theme-color" content="#5b7cfd"/>
+    <link rel="manifest" href="/manifest.json"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <link rel="apple-touch-icon" href="/favicon.ico"/>
+    
+    <!-- SEO_TITLE -->
+    <title>AlpURL – AI URL Intelligence Platform</title>
+    <!-- SEO_META -->
+    <meta name="description" content="AlpURL — AI-powered URL shortener and QR code generator. Shorten links, generate QR codes, and track analytics — free forever."/>
+    <!-- CANONICAL_URL -->
+    <link rel="canonical" href="https://alpurl.vercel.app/"/>
+    <!-- SEO_STRUCTURED_DATA -->
 
     <!-- Google Fonts & Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Geist:wght@600;700&display=swap" rel="stylesheet"/>
@@ -358,33 +363,38 @@
 
 <body class="bg-background text-on-background antialiased selection:bg-primary selection:text-on-primary">
 
+<!-- Splash Screen Overlay -->
+<div id="splash-screen" class="fixed inset-0 z-[9999] bg-[#09090b] flex flex-col items-center justify-center">
+    <video id="splash-video" src="/Create_a_premium_–_second.mp4" autoplay muted playsinline class="w-full h-full object-contain max-w-4xl max-h-[85vh]"></video>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <!--  PUBLIC NAVIGATION                                                  -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <nav id="public-nav" class="fixed top-0 left-0 right-0 z-50 h-16 bg-surface-glass backdrop-blur-xl border-b border-border-glass flex items-center px-6 gap-4">
     <!-- Logo -->
-    <a href="#/" id="pub-logo" class="flex items-center gap-2.5 shrink-0 cursor-pointer" aria-label="AlpURL Home">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0 shadow-lg" style="box-shadow:0 0 14px -4px #b4c5ff;">
-            <span class="material-symbols-outlined text-on-primary-fixed" style="font-size:16px;font-variation-settings:'FILL' 1;">link</span>
+    <a href="/" id="pub-logo" class="flex items-center gap-2.5 shrink-0 cursor-pointer" aria-label="AlpURL Home">
+        <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-md">
+            <img src="/logo.png" alt="AlpURL" class="w-full h-full object-cover"/>
         </div>
         <span class="font-bold text-[18px] text-primary" style="font-family:'Geist',sans-serif;">AlpURL</span>
     </a>
 
     <!-- Desktop nav links -->
     <div class="hidden md:flex items-center gap-0.5 flex-1 mx-4" id="pub-nav-links">
-        <a class="pub-nav-link active" data-pub-page="home"            href="#/">Home</a>
-        <a class="pub-nav-link"        data-pub-page="pub-links"       href="#/links">Short Links</a>
-        <a class="pub-nav-link"        data-pub-page="pub-qr"          href="#/qr">QR Generator</a>
-        <a class="pub-nav-link"        data-pub-page="pub-about"       href="#/about">About</a>
-        <a class="pub-nav-link"        data-pub-page="pub-contact"     href="#/contact">Contact</a>
+        <a class="pub-nav-link active" data-pub-page="home"            href="/">Home</a>
+        <a class="pub-nav-link"        data-pub-page="pub-links"       href="/links">Short Links</a>
+        <a class="pub-nav-link"        data-pub-page="pub-qr"          href="/qr">QR Generator</a>
+        <a class="pub-nav-link"        data-pub-page="pub-about"       href="/about">About</a>
+        <a class="pub-nav-link"        data-pub-page="pub-contact"     href="/contact">Contact</a>
     </div>
 
     <!-- Right side -->
     <div class="ml-auto flex items-center gap-2.5 shrink-0">
         <!-- Guest: login + signup -->
         <div id="pub-guest-btns" class="flex items-center gap-2">
-            <a href="#/login" id="pub-btn-login" class="px-4 py-1.5 border border-border-glass rounded-full text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-all text-sm font-semibold flex items-center justify-center">Log In</a>
-            <a href="#/register" id="pub-btn-signup" class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors neon-glow flex items-center justify-center">Sign Up Free</a>
+            <a href="/login" id="pub-btn-login" class="px-4 py-1.5 border border-border-glass rounded-full text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-all text-sm font-semibold flex items-center justify-center">Log In</a>
+            <a href="/register" id="pub-btn-signup" class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors neon-glow flex items-center justify-center">Sign Up Free</a>
         </div>
 
         <!-- Authed: user menu + dashboard btn -->
@@ -402,8 +412,8 @@
                         <p class="text-on-surface-variant text-xs mt-0.5" id="pub-user-email">user@example.com</p>
                     </div>
                     <div class="py-1">
-                        <a href="#/dashboard" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">dashboard</span>Dashboard</a>
-                        <a href="#/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
+                        <a href="/dashboard" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">dashboard</span>Dashboard</a>
+                        <a href="/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
                         <hr class="border-border-glass/40 my-1"/>
                         <button class="profile-menu-item" id="pub-logout" style="color:#ffb4ab;"><span class="material-symbols-outlined" style="font-size:18px;">logout</span>Sign Out</button>
                     </div>
@@ -425,14 +435,14 @@
 
 <!-- Mobile Menu -->
 <div id="pub-mobile-menu" class="hidden fixed top-16 left-0 right-0 z-40 bg-surface-container border-b border-border-glass shadow-2xl py-2">
-    <a class="pub-mobile-link block" href="#/">Home</a>
-    <a class="pub-mobile-link block" href="#/links">Short Links</a>
-    <a class="pub-mobile-link block" href="#/qr">QR Generator</a>
-    <a class="pub-mobile-link block" href="#/about">About</a>
-    <a class="pub-mobile-link block" href="#/contact">Contact</a>
+    <a class="pub-mobile-link block" href="/">Home</a>
+    <a class="pub-mobile-link block" href="/links">Short Links</a>
+    <a class="pub-mobile-link block" href="/qr">QR Generator</a>
+    <a class="pub-mobile-link block" href="/about">About</a>
+    <a class="pub-mobile-link block" href="/contact">Contact</a>
     <div class="px-6 py-3 flex gap-3 border-t border-border-glass/40 mt-2">
-        <a href="#/login" id="pub-mobile-login" class="flex-1 py-2 border border-border-glass rounded-xl text-center text-sm font-semibold text-on-surface-variant block">Log In</a>
-        <a href="#/register" id="pub-mobile-signup" class="flex-1 py-2 bg-primary text-on-primary rounded-xl text-center text-sm font-semibold block">Sign Up</a>
+        <a href="/login" id="pub-mobile-login" class="flex-1 py-2 border border-border-glass rounded-xl text-center text-sm font-semibold text-on-surface-variant block">Log In</a>
+        <a href="/register" id="pub-mobile-signup" class="flex-1 py-2 bg-primary text-on-primary rounded-xl text-center text-sm font-semibold block">Sign Up</a>
     </div>
 </div>
 
@@ -449,6 +459,23 @@
     <div id="page-pub-register"   data-public-page class="hidden pt-16 min-h-screen"></div>
 </div>
 
+<!-- Public Footer -->
+<footer id="public-footer" class="bg-surface-dim border-t border-border-glass py-12 px-6">
+    <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <p class="text-sm text-on-surface-variant text-center md:text-left">
+            &copy; 2026 AlpURL. Designed &amp; Developed by 
+            <a href="https://github.com/Praval07" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline font-semibold">Praval Saxena</a>. 
+            All rights reserved.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="/about" class="text-xs text-on-surface-variant hover:text-primary transition-all">About Us</a>
+            <a href="/contact" class="text-xs text-on-surface-variant hover:text-primary transition-all">Contact Support</a>
+            <a href="#" id="footer-privacy-link" class="text-xs text-on-surface-variant hover:text-primary transition-all">Privacy Policy</a>
+            <a href="#" id="footer-terms-link" class="text-xs text-on-surface-variant hover:text-primary transition-all">Terms of Service</a>
+        </div>
+    </div>
+</footer>
+
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <!--  DASHBOARD APP                                                      -->
 <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -458,8 +485,8 @@
     <aside id="sidebar" class="w-[280px] h-screen fixed left-0 top-0 border-r border-border-glass bg-surface-container flex flex-col z-50" style="padding:1.25rem 1rem;">
         <!-- Logo -->
         <div class="flex items-center gap-3 mb-5 px-2">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0 shadow-lg" style="box-shadow:0 0 18px -4px #b4c5ff;">
-                <span class="material-symbols-outlined text-on-primary-fixed" style="font-size:18px;font-variation-settings:'FILL' 1;">link</span>
+            <div class="w-9 h-9 rounded-lg overflow-hidden shrink-0 shadow-md">
+                <img src="/logo.png" alt="AlpURL" class="w-full h-full object-cover"/>
             </div>
             <div>
                 <h1 class="font-bold text-[20px] text-primary leading-none" style="font-family:'Geist',sans-serif;">AlpURL</h1>
@@ -470,14 +497,14 @@
         <!-- Nav -->
         <nav class="flex-1 flex flex-col overflow-y-auto custom-scrollbar" style="gap:2px;">
             <span class="nav-section-label">Core</span>
-            <a class="nav-link active" id="nav-dashboard"  data-page="dashboard"  href="#/dashboard"  role="button" aria-current="page"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
-            <a class="nav-link"        id="nav-links"       data-page="links"       href="#/dashboard/links"       role="button"><span class="material-symbols-outlined">link</span>Links</a>
-            <a class="nav-link"        id="nav-qrcodes"     data-page="qrcodes"     href="#/dashboard/qrcodes"     role="button"><span class="material-symbols-outlined">qr_code_2</span>QR Codes</a>
-            <a class="nav-link"        id="nav-analytics"   data-page="analytics"   href="#/dashboard/analytics"   role="button"><span class="material-symbols-outlined">insights</span>Analytics</a>
-            <a class="nav-link"        id="nav-domains"     data-page="domains"     href="#/dashboard/domains"     role="button"><span class="material-symbols-outlined">language</span>Domains</a>
+            <a class="nav-link active" id="nav-dashboard"  data-page="dashboard"  href="/dashboard"  role="button" aria-current="page"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+            <a class="nav-link"        id="nav-links"       data-page="links"       href="/dashboard/links"       role="button"><span class="material-symbols-outlined">link</span>Links</a>
+            <a class="nav-link"        id="nav-qrcodes"     data-page="qrcodes"     href="/dashboard/qrcodes"     role="button"><span class="material-symbols-outlined">qr_code_2</span>QR Codes</a>
+            <a class="nav-link"        id="nav-analytics"   data-page="analytics"   href="/dashboard/analytics"   role="button"><span class="material-symbols-outlined">insights</span>Analytics</a>
+            <a class="nav-link"        id="nav-domains"     data-page="domains"     href="/dashboard/domains"     role="button"><span class="material-symbols-outlined">language</span>Domains</a>
             <span class="nav-section-label">Account</span>
-            <a class="nav-link"        id="nav-settings"     data-page="settings"      href="#/dashboard/settings"      role="button"><span class="material-symbols-outlined">settings</span>Settings</a>
-            <a class="nav-link"        id="nav-help"         data-page="help"           href="#/dashboard/help"           role="button"><span class="material-symbols-outlined">help_outline</span>Help &amp; Support</a>
+            <a class="nav-link"        id="nav-settings"     data-page="settings"      href="/dashboard/settings"      role="button"><span class="material-symbols-outlined">settings</span>Settings</a>
+            <a class="nav-link"        id="nav-help"         data-page="help"           href="/dashboard/help"           role="button"><span class="material-symbols-outlined">help_outline</span>Help &amp; Support</a>
         </nav>
 
         <!-- User card -->
@@ -559,8 +586,8 @@
                         <p class="text-on-surface-variant text-xs mt-0.5" id="dash-profile-email">user@example.com</p>
                     </div>
                     <div class="py-1">
-                        <a href="#/dashboard/profile" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">person</span>Profile</a>
-                        <a href="#/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
+                        <a href="/dashboard/profile" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">person</span>Profile</a>
+                        <a href="/dashboard/settings" class="profile-menu-item flex items-center gap-2"><span class="material-symbols-outlined" style="font-size:18px;">settings</span>Settings</a>
                         <hr class="border-border-glass/40 my-1"/>
                         <button class="profile-menu-item" id="dash-logout" style="color:#ffb4ab;"><span class="material-symbols-outlined" style="font-size:18px;">logout</span>Sign Out</button>
                     </div>
@@ -593,7 +620,17 @@
             <button class="auth-tab"        id="auth-tab-register" aria-selected="false">Create Account</button>
         </div>
         <div class="p-6">
-            <p id="auth-title" class="text-lg font-bold text-on-background mb-5">Welcome back to AlpURL</p>
+            <!-- Brand Logo & Header -->
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-14 h-14 rounded-xl overflow-hidden shadow-lg mb-2">
+                    <img src="/logo.png" alt="AlpURL" class="w-full h-full object-cover"/>
+                </div>
+                <h2 class="font-bold text-[22px] text-primary leading-none" style="font-family:'Geist',sans-serif;">AlpURL</h2>
+                <p class="text-[10px] text-on-surface-variant mt-1" style="font-family:'JetBrains Mono',monospace;letter-spacing:.06em;">AI URL Intelligence Platform</p>
+                <p class="text-[11px] text-on-surface-variant font-medium mt-1">Short Links. Smart Connections. Infinite Possibilities.</p>
+            </div>
+
+            <p id="auth-title" class="text-xs font-bold text-center text-on-background/70 uppercase tracking-widest mb-4">Account Access</p>
 
             <!-- Login Form -->
             <form id="login-form" class="flex flex-col gap-4" novalidate>
@@ -714,5 +751,25 @@
 </div>
 
 <script src="/app.js"></script>
+<script>
+    // Splash Screen Handler
+    (function() {
+        const video = document.getElementById("splash-video");
+        const splash = document.getElementById("splash-screen");
+        if (video && splash) {
+            video.addEventListener("ended", () => {
+                splash.classList.add("fade-out");
+                setTimeout(() => splash.remove(), 800);
+            });
+            // Auto-fade fallback in case of block/autoplay restriction
+            setTimeout(() => {
+                if (splash && splash.parentNode) {
+                    splash.classList.add("fade-out");
+                    setTimeout(() => splash.remove(), 800);
+                }
+            }, 9500);
+        }
+    })();
+</script>
 </body>
 </html>

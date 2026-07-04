@@ -88,7 +88,7 @@ const API = {
 const State = {
     // Auth & Navigation
     auth: JSON.parse(localStorage.getItem("alpurl-auth") || "null"),
-    currentHash: window.location.hash || "#/",
+    currentRoute: window.location.pathname || "/",
     
     // Theme & Styling
     theme: localStorage.getItem("alpurl-theme") || "dark",
@@ -423,50 +423,112 @@ function applyTheme(t) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-//  ROUTING & LAYOUT NAVIGATION
+//  ROUTING & LAYOUT NAVIGATION (Enterprise Clean URLs Router)
 // ════════════════════════════════════════════════════════════════════
+const PAGE_TITLES = {
+    home: "AlpURL – AI-Powered URL Shortener, QR Code Generator & Link Analytics",
+    dashboard: "Dashboard | AlpURL",
+    links: "My Links | AlpURL",
+    qrcodes: "QR Code Generator | AlpURL",
+    analytics: "Analytics Dashboard | AlpURL",
+    domains: "Custom Domains | AlpURL",
+    settings: "Settings | AlpURL",
+    profile: "Profile | AlpURL",
+    login: "Login | AlpURL",
+    register: "Create Your Free Account | AlpURL",
+    about: "About AlpURL",
+    contact: "Contact AlpURL"
+};
+
 function initRouting() {
-    window.addEventListener("hashchange", handleRouting);
+    window.addEventListener("popstate", handleRouting);
+    
+    // Intercept clicks on links that match SPA paths for dynamic transition
+    const SPA_PATHS = ["/", "/login", "/register", "/dashboard", "/links", "/qrcodes", "/analytics", "/domains", "/settings", "/profile", "/help", "/about", "/contact"];
+    document.addEventListener("click", e => {
+        const link = e.target.closest("a");
+        if (link && link.href) {
+            try {
+                const url = new URL(link.href);
+                if (url.origin === window.location.origin) {
+                    const path = url.pathname;
+                    const isSpaPath = SPA_PATHS.includes(path) || path.startsWith("/dashboard");
+                    if (isSpaPath) {
+                        e.preventDefault();
+                        history.pushState(null, "", path);
+                        handleRouting();
+                    }
+                }
+            } catch (err) {
+                // Let standard navigation handle invalid URLs
+            }
+        }
+    });
+
+    // Wire shared footer links
+    document.getElementById("footer-privacy-link")?.addEventListener("click", e => {
+        e.preventDefault();
+        showPolicyModal("privacy");
+    });
+    document.getElementById("footer-terms-link")?.addEventListener("click", e => {
+        e.preventDefault();
+        showPolicyModal("terms");
+    });
+
     handleRouting();
 }
 
 function handleRouting() {
-    const hash = window.location.hash || "#/";
-    State.currentHash = hash;
+    let route = window.location.pathname || "/";
+    
+    // Support hash redirect fallbacks for backward compatibility
+    if (route === "/" && window.location.hash) {
+        route = window.location.hash.replace("#", "");
+    }
+    
     closeAllDropdowns();
 
-    // Determine Mode
-    const isDashboardRoute = hash.startsWith("#/dashboard");
+    const isDashboardRoute = route.startsWith("/dashboard");
     
     if (isDashboardRoute) {
-        // Auth check
         if (!State.auth) {
-            window.location.hash = "#/";
+            history.pushState(null, "", "/");
             showAuthModal("login");
             showToast("Login required to access the dashboard.", "warning");
             return;
         }
         
-        // Setup Dashboard Shell
         $q("#public-nav").classList.add("hidden");
         $q("#public-layout").classList.add("hidden");
+        $q("#public-footer").classList.add("hidden");
         $q("#dashboard-app").classList.remove("hidden");
         
-        // Sub-page parsing
-        const subPage = hash.replace("#/dashboard", "").replace("/", "") || "dashboard";
+        let subPage = route.replace("/dashboard", "").replace("/", "");
+        if (subPage.includes("/")) {
+            subPage = subPage.split("/")[0];
+        }
+        if (!subPage) subPage = "dashboard";
+        
         navigateToDashboardPage(subPage);
     } else {
-        // Setup Public Shell
         $q("#dashboard-app").classList.add("hidden");
         $q("#public-nav").classList.remove("hidden");
         $q("#public-layout").classList.remove("hidden");
+        $q("#public-footer").classList.remove("hidden");
         
-        const pubPage = hash.replace("#/", "").replace("/", "") || "home";
+        let pubPage = route.replace("/", "");
+        if (pubPage === "") pubPage = "home";
+        
+        // Map shorthand paths to public render views
+        if (pubPage === "links") pubPage = "pub-links";
+        if (pubPage === "qr") pubPage = "pub-qr";
+        if (pubPage === "about") pubPage = "pub-about";
+        if (pubPage === "contact") pubPage = "pub-contact";
+        
         navigateToPublicPage(pubPage);
     }
 }
 
-// Switch between dashboard tabs
 function navigateToDashboardPage(pageId) {
     $qa("#dash-main [data-page]").forEach(el => el.classList.add("hidden"));
     
@@ -479,22 +541,19 @@ function navigateToDashboardPage(pageId) {
     
     // Update active nav links
     $qa(".nav-link").forEach(link => {
-        const matches = link.getAttribute("href") === `#/dashboard/${pageId}` || (pageId === "dashboard" && link.getAttribute("href") === "#/dashboard");
+        const matches = link.getAttribute("href") === `/dashboard/${pageId}` || (pageId === "dashboard" && link.getAttribute("href") === "/dashboard");
         link.classList.toggle("active", matches);
     });
 
     State.currentPage = pageId;
-    document.title = `AlpURL — ${pageTitles[pageId] || "AI URL Intelligence Platform"}`;
+    document.title = PAGE_TITLES[pageId] || "Dashboard | AlpURL";
     
-    // Initialize or render the page
     refreshActivePageData(false);
 }
 
-// Switch between public landing page tabs
 function navigateToPublicPage(pageId) {
     $qa("#public-layout [data-public-page]").forEach(el => el.classList.add("hidden"));
     
-    // Standardize IDs
     let elId = `page-${pageId}`;
     if (pageId === "home") elId = "page-home";
     else if (!elId.startsWith("page-pub-")) elId = elId.replace("page-", "page-pub-");
@@ -506,30 +565,32 @@ function navigateToPublicPage(pageId) {
     }
     pageEl.classList.remove("hidden");
     
-    // Highlight active nav links on desktop
     $qa("#pub-nav-links a").forEach(link => {
         const cleanHref = link.getAttribute("href");
-        const hrefPage = cleanHref ? cleanHref.replace("#/", "") : "";
-        const isActive = (pageId === "home" && cleanHref === "#/") ||
+        const hrefPage = cleanHref ? cleanHref.replace("/", "") : "";
+        const isActive = (pageId === "home" && cleanHref === "/") ||
                          (pageId === hrefPage) ||
                          (pageId === `pub-${hrefPage}`);
         link.classList.toggle("active", isActive);
     });
 
-    // Highlight active nav links on mobile
     $qa("#pub-mobile-menu a").forEach(link => {
         const cleanHref = link.getAttribute("href");
-        const hrefPage = cleanHref ? cleanHref.replace("#/", "") : "";
-        const isActive = (pageId === "home" && cleanHref === "#/") ||
+        const hrefPage = cleanHref ? cleanHref.replace("/", "") : "";
+        const isActive = (pageId === "home" && cleanHref === "/") ||
                          (pageId === hrefPage) ||
                          (pageId === `pub-${hrefPage}`);
         link.classList.toggle("active", isActive);
     });
 
-    // Close mobile hamburger menu
     $q("#pub-mobile-menu")?.classList.add("hidden");
 
-    // Render public content
+    let titleKey = pageId;
+    if (pageId.startsWith("pub-")) titleKey = pageId.replace("pub-", "");
+    if (titleKey === "qr") titleKey = "qrcodes";
+    
+    document.title = PAGE_TITLES[titleKey] || "AlpURL – AI URL Intelligence Platform";
+
     renderPublicPage(pageId, pageEl);
 }
 
@@ -642,8 +703,17 @@ function renderPublicPage(id, container) {
 function renderPublicLoginPage(container) {
     container.innerHTML = `
     <div class="pub-container pt-12 pb-24 px-6 max-w-md flex flex-col items-center">
+        <!-- Brand Logo & Header -->
+        <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-14 h-14 rounded-xl overflow-hidden shadow-lg mb-2">
+                <img src="/logo.png" alt="AlpURL" class="w-full h-full object-cover"/>
+            </div>
+            <h2 class="font-bold text-[22px] text-primary leading-none" style="font-family:'Geist',sans-serif;">AlpURL</h2>
+            <p class="text-[10px] text-on-surface-variant mt-1" style="font-family:'JetBrains Mono',monospace;letter-spacing:.06em;">AI URL Intelligence Platform</p>
+            <p class="text-[11px] text-on-surface-variant font-medium mt-1">Short Links. Smart Connections. Infinite Possibilities.</p>
+        </div>
         <div class="glass-card bg-surface-container-high border border-border-glass w-full shadow-2xl p-6 relative">
-            <h3 class="text-xl font-bold text-on-background mb-1 text-center">Welcome back to AlpURL</h3>
+            <h3 class="text-xl font-bold text-on-background mb-1 text-center">Welcome back</h3>
             <p class="text-on-surface-variant text-xs mb-5 text-center">Log in to manage and optimize your links</p>
             
             <form id="pub-page-login-form" class="flex flex-col gap-4" novalidate>
@@ -663,7 +733,7 @@ function renderPublicLoginPage(container) {
                     <button type="button" class="text-primary hover:underline">Forgot password?</button>
                 </div>
                 <button type="submit" class="w-full py-3 bg-primary text-on-primary rounded-xl font-semibold hover:bg-primary/90 transition-colors neon-glow">Log In</button>
-                <p class="text-center text-xs text-on-surface-variant mt-2">Don't have an account? <a href="#/register" class="text-primary hover:underline font-semibold">Sign up free</a></p>
+                <p class="text-center text-xs text-on-surface-variant mt-2">Don't have an account? <a href="/register" class="text-primary hover:underline font-semibold">Sign up free</a></p>
             </form>
         </div>
     </div>`;
@@ -681,7 +751,8 @@ function renderPublicLoginPage(container) {
             localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
             showToast("Logged in successfully!", "success");
             initSessionState();
-            window.location.hash = "#/dashboard";
+            history.pushState(null, "", "/dashboard");
+            handleRouting();
         } catch (e) {
             showToast(e.message || "Authentication failed", "error");
         }
@@ -691,8 +762,17 @@ function renderPublicLoginPage(container) {
 function renderPublicRegisterPage(container) {
     container.innerHTML = `
     <div class="pub-container pt-12 pb-24 px-6 max-w-md flex flex-col items-center">
+        <!-- Brand Logo & Header -->
+        <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-14 h-14 rounded-xl overflow-hidden shadow-lg mb-2">
+                <img src="/logo.png" alt="AlpURL" class="w-full h-full object-cover"/>
+            </div>
+            <h2 class="font-bold text-[22px] text-primary leading-none" style="font-family:'Geist',sans-serif;">AlpURL</h2>
+            <p class="text-[10px] text-on-surface-variant mt-1" style="font-family:'JetBrains Mono',monospace;letter-spacing:.06em;">AI URL Intelligence Platform</p>
+            <p class="text-[11px] text-on-surface-variant font-medium mt-1">Short Links. Smart Connections. Infinite Possibilities.</p>
+        </div>
         <div class="glass-card bg-surface-container-high border border-border-glass w-full shadow-2xl p-6 relative">
-            <h3 class="text-xl font-bold text-on-background mb-1 text-center">Create your free account</h3>
+            <h3 class="text-xl font-bold text-on-background mb-1 text-center">Create account</h3>
             <p class="text-on-surface-variant text-xs mb-5 text-center">Get started with advanced link analytics</p>
             
             <form id="pub-page-register-form" class="flex flex-col gap-4" novalidate>
@@ -715,10 +795,10 @@ function renderPublicRegisterPage(container) {
                     <input id="pub-reg-password" class="form-input" type="password" placeholder="Min 8 characters" required autocomplete="new-password"/>
                 </div>
                 <div class="text-xs text-on-surface-variant leading-relaxed">
-                    By creating an account, you agree to our <a href="#" class="text-primary hover:underline">Terms of Service</a>.
+                    By creating an account, you agree to our <a href="#" class="text-primary hover:underline font-semibold">Terms of Service</a>.
                 </div>
                 <button type="submit" class="w-full py-3 bg-primary text-on-primary rounded-xl font-semibold hover:bg-primary/90 transition-colors neon-glow">Create Account</button>
-                <p class="text-center text-xs text-on-surface-variant mt-2">Already have an account? <a href="#/login" class="text-primary hover:underline font-semibold">Log in</a></p>
+                <p class="text-center text-xs text-on-surface-variant mt-2">Already have an account? <a href="/login" class="text-primary hover:underline font-semibold">Log in</a></p>
             </form>
         </div>
     </div>`;
@@ -740,7 +820,8 @@ function renderPublicRegisterPage(container) {
             localStorage.setItem("alpurl-api-key", res.token || "alp_live_demo_key");
             showToast("Account created successfully!", "success");
             initSessionState();
-            window.location.hash = "#/dashboard";
+            history.pushState(null, "", "/dashboard");
+            handleRouting();
         } catch (e) {
             showToast(e.message || "Registration failed", "error");
         }
@@ -850,7 +931,7 @@ function renderProfilePage(container, settings) {
                     <span class="font-semibold text-primary font-mono">${settings.default_domain || 'alp.url'}</span>
                 </div>
             </div>
-            <a href="#/dashboard/settings" class="mt-2 w-full py-2.5 bg-primary text-on-primary font-bold rounded-xl text-xs hover:bg-primary/95 transition-all text-center neon-glow">
+            <a href="/dashboard/settings" class="mt-2 w-full py-2.5 bg-primary text-on-primary font-bold rounded-xl text-xs hover:bg-primary/95 transition-all text-center neon-glow">
                 Edit Settings
             </a>
         </div>
@@ -999,19 +1080,7 @@ function renderLandingPage(container) {
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Public Footer -->
-    <footer class="bg-surface-dim border-t border-border-glass py-12 px-6">
-        <div class="pub-container flex flex-col md:flex-row justify-between items-center gap-6">
-            <p class="text-sm text-on-surface-variant">© 2026 AlpURL. Made with ❤️ by Antigraviti Dev. All rights reserved.</p>
-            <div class="flex gap-4">
-                <a href="#/about" class="text-xs text-on-surface-variant hover:text-primary transition-all">About Us</a>
-                <a href="#/developers" class="text-xs text-on-surface-variant hover:text-primary transition-all">Developer API</a>
-                <a href="#/contact" class="text-xs text-on-surface-variant hover:text-primary transition-all">Contact Support</a>
-            </div>
-        </div>
-    </footer>`;
+    </section>`;
 
     // Wire hero tab switches
     $q("#hero-tab-shorten", container).addEventListener("click", () => {
@@ -1168,13 +1237,14 @@ function renderStandaloneLinksPage(container) {
         showShareModal($q("#sa-result-url", container).value);
     });
     $q("#btn-sa-qr", container).addEventListener("click", () => {
-        window.location.hash = `#/qr?url=${encodeURIComponent($q("#sa-result-url", container).value)}`;
+        history.pushState(null, "", `/qr?url=${encodeURIComponent($q("#sa-result-url", container).value)}`);
+        handleRouting();
     });
 }
 
 function renderStandaloneQRPage(container) {
-    // Check if query string URL exists in hash
-    const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    // Check if query string URL exists in path or fallback hash
+    const params = new URLSearchParams(window.location.search || window.location.hash.split("?")[1] || "");
     const initialUrl = params.get("url") || "https://alp.url";
 
     container.innerHTML = `
@@ -1410,16 +1480,176 @@ function renderStandaloneDevelopersPage(container) {
 
 function renderPublicAboutPage(container) {
     container.innerHTML = `
-    <div class="pub-container pt-12 pb-24 px-6 max-w-2xl text-center flex flex-col items-center">
-        <h2 class="text-3xl font-bold text-on-surface mb-4" style="font-family:'Geist', sans-serif;">About AlpURL</h2>
-        <p class="text-on-surface-variant text-base leading-relaxed mb-6">
-            AlpURL is a high-performance URL shortening and management platform engineered by Antigraviti Dev. We empower users with reliable link shortening, deep analytical telemetry, and custom branded domains.
-        </p>
-        <div class="glass-card p-6 w-full text-left flex flex-col gap-4 mt-6">
-            <h3 class="font-bold text-primary text-sm uppercase tracking-wide">Our Mission</h3>
-            <p class="text-on-surface-variant text-sm leading-relaxed">
-                We believe that premium, Linear-grade link shortening tools should be accessible to developers and businesses free of charge. No payment gates, no credit card prompts, just fast, raw performance.
-            </p>
+    <div class="pub-container pt-12 pb-24 px-6 max-w-4xl flex flex-col items-center gap-12">
+        <!-- Main Header -->
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-lg mx-auto mb-4">
+                <img src="/logo.png" alt="AlpURL Logo" class="w-full h-full object-cover"/>
+            </div>
+            <h2 class="text-4xl font-bold text-on-surface mb-2" style="font-family:'Geist', sans-serif;">About AlpURL</h2>
+            <p class="text-on-surface-variant text-sm max-w-xl mx-auto">AI URL Intelligence Platform. Short Links. Smart Connections. Infinite Possibilities.</p>
+        </div>
+
+        <!-- Two Column Content -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            <!-- Our Story -->
+            <div class="glass-card p-6 flex flex-col gap-3">
+                <h3 class="font-bold text-primary text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">history_edu</span>Our Story
+                </h3>
+                <p class="text-on-surface-variant text-xs leading-relaxed">
+                    AlpURL started as a vision to challenge standard clunky link managers by building a fast, developer-friendly, and modern alternative with built-in telemetry intelligence.
+                </p>
+            </div>
+
+            <!-- Our Mission -->
+            <div class="glass-card p-6 flex flex-col gap-3">
+                <h3 class="font-bold text-secondary text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">rocket_launch</span>Our Mission
+                </h3>
+                <p class="text-on-surface-variant text-xs leading-relaxed">
+                    To make premium-grade URL optimization tools, dynamic custom domains, and deep analytical insight data freely accessible to developers and businesses globally.
+                </p>
+            </div>
+
+            <!-- Our Vision -->
+            <div class="glass-card p-6 flex flex-col gap-3">
+                <h3 class="font-bold text-tertiary text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>Our Vision
+                </h3>
+                <p class="text-on-surface-variant text-xs leading-relaxed">
+                    Fusing AI-powered recommendations with link routing systems to turn simple short redirects into a secure digital asset pipeline.
+                </p>
+            </div>
+
+            <!-- Why AlpURL -->
+            <div class="glass-card p-6 flex flex-col gap-3">
+                <h3 class="font-bold text-primary text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span>Why AlpURL
+                </h3>
+                <p class="text-on-surface-variant text-xs leading-relaxed">
+                    Unlike standard platforms that lock vital features behind paywalls, AlpURL provides dynamic custom domains, real-time telemetry analytics, and custom QR codes for free.
+                </p>
+            </div>
+        </div>
+
+        <!-- Core Features & Stack -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-primary text-[28px] mb-1">dashboard_customize</span>
+                <h4 class="font-bold text-on-surface text-sm">Core Features</h4>
+                <ul class="text-[11px] text-on-surface-variant list-disc pl-4 flex flex-col gap-1.5 mt-1 leading-normal">
+                    <li>Dynamic short links & QR Codes</li>
+                    <li>Custom domains & redirection protocols</li>
+                    <li>Isolated multi-user workspace management</li>
+                </ul>
+            </div>
+            
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-secondary text-[28px] mb-1">terminal</span>
+                <h4 class="font-bold text-on-surface text-sm">Technology Stack</h4>
+                <ul class="text-[11px] text-on-surface-variant list-disc pl-4 flex flex-col gap-1.5 mt-1 leading-normal">
+                    <li>FastAPI & Python backend engine</li>
+                    <li>MongoDB high-performance database</li>
+                    <li>Vanilla CSS & Tailwind static SPA</li>
+                </ul>
+            </div>
+
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-tertiary text-[28px] mb-1">security</span>
+                <h4 class="font-bold text-on-surface text-sm">Security & Privacy</h4>
+                <ul class="text-[11px] text-on-surface-variant list-disc pl-4 flex flex-col gap-1.5 mt-1 leading-normal">
+                    <li>HMAC-SHA256 session token signatures</li>
+                    <li>Automatic password hashing logic</li>
+                    <li>Complete user workspace data isolation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Performance, AI & Open Source -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-secondary text-[28px] mb-1">speed</span>
+                <h4 class="font-bold text-on-surface text-sm">Performance & Reliability</h4>
+                <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                    Designed with real-time in-memory redirection caching and lightweight GZIP middleware, ensuring fast time-to-first-byte (TTFB) link routing.
+                </p>
+            </div>
+
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-primary text-[28px] mb-1">psychology</span>
+                <h4 class="font-bold text-on-surface text-sm">AI-Powered Intelligence</h4>
+                <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                    Future integrations feature intelligent fraud-detection, traffic pattern monitoring, and click milestone reports.
+                </p>
+            </div>
+
+            <div class="glass-card p-5 flex flex-col gap-2">
+                <span class="material-symbols-outlined text-tertiary text-[28px] mb-1">hub</span>
+                <h4 class="font-bold text-on-surface text-sm">Open Source Journey</h4>
+                <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                    Driven by the developer community. Fully open source project hosted on GitHub to invite active collaboration, transparency, and improvements.
+                </p>
+            </div>
+        </div>
+
+        <!-- Future Roadmap -->
+        <div class="glass-card p-6 w-full text-left flex flex-col gap-4">
+            <h3 class="font-bold text-secondary text-sm uppercase tracking-wide flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">map</span>Future Roadmap
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="p-3 border border-border-glass rounded-xl bg-black/10">
+                    <span class="badge badge-primary">Q3 2026</span>
+                    <p class="text-xs font-bold text-on-surface mt-2">Team Workspaces</p>
+                    <p class="text-[10px] text-on-surface-variant mt-1 leading-normal">Multi-user workspace sharing and roles.</p>
+                </div>
+                <div class="p-3 border border-border-glass rounded-xl bg-black/10">
+                    <span class="badge badge-secondary">Q4 2026</span>
+                    <p class="text-xs font-bold text-on-surface mt-2">Link A/B Testing</p>
+                    <p class="text-[10px] text-on-surface-variant mt-1 leading-normal">Intelligent link routing based on location or device.</p>
+                </div>
+                <div class="p-3 border border-border-glass rounded-xl bg-black/10">
+                    <span class="badge badge-muted">Q1 2027</span>
+                    <p class="text-xs font-bold text-on-surface mt-2">Deep API Triggers</p>
+                    <p class="text-[10px] text-on-surface-variant mt-1 leading-normal">Webhook payloads for redirection event triggers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meet the Creator -->
+        <div class="glass-card p-8 w-full flex flex-col md:flex-row items-center gap-6 mt-4 border border-primary/20 bg-primary/5">
+            <div class="w-20 h-20 rounded-full overflow-hidden shrink-0 ring-4 ring-primary/30">
+                <img src="https://avatars.githubusercontent.com/u/104192934?v=4" alt="Praval Saxena" class="w-full h-full object-cover" onerror="this.src='/logo.png'"/>
+            </div>
+            <div class="flex-1 text-center md:text-left">
+                <span class="text-[10px] uppercase font-bold text-primary tracking-widest font-mono">Meet the Creator</span>
+                <h3 class="text-xl font-bold text-on-surface mt-1">Praval Saxena</h3>
+                <p class="text-xs text-on-surface-variant font-medium mt-0.5">Founder & Full Stack Developer</p>
+                
+                <p class="text-xs text-on-surface-variant mt-3 leading-relaxed">
+                    Passionate Software Engineer focused on building scalable cloud-native applications, AI-powered platforms, modern system design projects, and enterprise SaaS products.
+                </p>
+                <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">
+                    Creator of AlpURL — an AI-powered URL Intelligence Platform designed to simplify link management, analytics, and digital sharing through modern engineering and beautiful user experiences.
+                </p>
+
+                <!-- Contacts -->
+                <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+                    <a href="https://github.com/Praval07" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-xs text-on-surface hover:text-primary transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                    <a href="https://linkedin.com/in/praval-saxena" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-xs text-on-surface hover:text-primary transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="mailto:praval@alpurl.dev" class="flex items-center gap-1.5 text-xs text-on-surface hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-[16px]">mail</span>
+                        Email
+                    </a>
+                </div>
+            </div>
         </div>
     </div>`;
 }
@@ -2673,9 +2903,7 @@ function renderAPIPage(container) {
     </div>`;
 }
 
-function renderDevelopersPage(container) {
-    renderStandaloneDevelopersPage(container);
-}
+
 
 // ════════════════════════════════════════════════════════════════════
 //  SHARED PAGE ACTIONS & MODALS
@@ -2792,7 +3020,8 @@ $q("#login-form")?.addEventListener("submit", async e => {
         $q("#auth-modal").classList.add("hidden");
         showToast("Logged in successfully!", "success");
         initSessionState();
-        window.location.hash = "#/dashboard";
+        history.pushState(null, "", "/dashboard");
+        handleRouting();
     } catch (e) {
         showToast(e.message || "Authentication failed", "error");
     }
@@ -2816,7 +3045,8 @@ $q("#register-form")?.addEventListener("submit", async e => {
         $q("#auth-modal").classList.add("hidden");
         showToast("Account created successfully!", "success");
         initSessionState();
-        window.location.hash = "#/dashboard";
+        history.pushState(null, "", "/dashboard");
+        handleRouting();
     } catch (e) {
         showToast(e.message || "Registration failed", "error");
     }
@@ -2852,7 +3082,8 @@ function logout() {
     localStorage.removeItem("alpurl-api-key");
     initSessionState();
     showToast("Signed out successfully.", "info");
-    window.location.hash = "#/";
+    history.pushState(null, "", "/");
+    handleRouting();
 }
 
 $q("#pub-logout")?.addEventListener("click", logout);
@@ -2866,7 +3097,8 @@ $q("#btn-profile-menu")?.addEventListener("click", e => {
     $q("#profile-menu")?.classList.toggle("hidden");
 });
 $q("#sidebar-profile-btn")?.addEventListener("click", () => {
-    window.location.hash = "#/dashboard/profile";
+    history.pushState(null, "", "/dashboard/profile");
+    handleRouting();
 });
 
 // Hamburger menu toggle
@@ -3157,3 +3389,52 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+function showPolicyModal(type) {
+    const title = type === "privacy" ? "Privacy Policy" : "Terms of Service";
+    const body = type === "privacy" ? `
+        <h4 class="font-bold text-sm text-on-surface mb-2">1. Information We Collect</h4>
+        <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">We collect link analytics metadata (IP address, user-agent, referrers, and timestamps) solely to provide click tracking dashboards. We do not sell or share user data with third parties.</p>
+        <h4 class="font-bold text-sm text-on-surface mb-2">2. Data Security</h4>
+        <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">Your data is stored securely in industry-standard databases with encryption at rest and in transit. Session tokens are cryptographically signed to prevent unauthorized access.</p>
+        <h4 class="font-bold text-sm text-on-surface mb-2">3. Cookies</h4>
+        <p class="text-xs text-on-surface-variant leading-relaxed">We use essential local storage tokens to persist your authentication session and light/dark theme preferences.</p>
+    ` : `
+        <h4 class="font-bold text-sm text-on-surface mb-2">1. Service Usage</h4>
+        <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">AlpURL is provided free for individual and developer usage. Links used for phishing, malware distribution, or spam are strictly prohibited and will be suspended immediately.</p>
+        <h4 class="font-bold text-sm text-on-surface mb-2">2. Service SLA</h4>
+        <p class="text-xs text-on-surface-variant mb-4 leading-relaxed">AlpURL is provided "as is" with no warranty. While we strive to maintain 99.9% redirect uptime, we are not liable for any service interruptions.</p>
+        <h4 class="font-bold text-sm text-on-surface mb-2">3. Account Safety</h4>
+        <p class="text-xs text-on-surface-variant leading-relaxed">You are responsible for safeguarding your credentials. AlpURL reserves the right to terminate accounts that violate usage guidelines.</p>
+    `;
+    
+    // Check if modal exists
+    let modal = document.getElementById("policy-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "policy-modal";
+        modal.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in";
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = `
+        <div class="glass-card bg-surface-container-high border border-border-glass w-full max-w-lg shadow-2xl p-6 relative">
+            <h3 class="text-lg font-bold text-on-background mb-4">${title}</h3>
+            <div class="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                ${body}
+            </div>
+            <button id="policy-modal-close" class="mt-6 w-full py-2.5 bg-primary text-on-primary rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors">
+                Close
+            </button>
+            <button id="policy-modal-x" class="absolute top-3 right-3 w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-on-surface-variant" aria-label="Close">
+                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+            </button>
+        </div>
+    `;
+    
+    modal.classList.remove("hidden");
+    
+    const close = () => modal.classList.add("hidden");
+    document.getElementById("policy-modal-close").addEventListener("click", close);
+    document.getElementById("policy-modal-x").addEventListener("click", close);
+}
